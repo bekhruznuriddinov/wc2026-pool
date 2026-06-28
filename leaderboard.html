@@ -3,30 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Leaderboard — World Cup 2026</title>
+  <title>Leaderboard — HCAP World Cup 2026</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="bg-stars"></div>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="predictions.html" class="logo-wrap">
+      <img src="https://images.squarespace-cdn.com/content/v1/6334ad5adde1f249453ad01a/1664396655469-ZPR66CXLS6CHH5MLB32I/HCAP-Partners.png?format=300w"
+           alt="HCAP Partners" class="logo-img">
+      <div class="logo-divider"></div>
+      <span class="logo-label">World Cup 2026</span>
+    </a>
+    <nav style="display:flex;gap:0.25rem">
+      <a href="predictions.html" class="nav-link">My Picks</a>
+      <a href="leaderboard.html" class="nav-link active">Leaderboard</a>
+    </nav>
+  </div>
+</nav>
 
 <div class="page">
 
-  <header class="site-header">
-    <a href="predictions.html" class="logo">
-      <span class="trophy">🏆</span> WC 2026 Pool
-    </a>
-    <nav>
-      <a href="predictions.html" class="btn btn-ghost">My Picks</a>
-      <a href="leaderboard.html" class="btn btn-ghost" style="color:var(--text)">Leaderboard</a>
-    </nav>
-  </header>
-
-  <div style="margin-bottom:1.5rem">
-    <h1 style="font-size:1.6rem;font-weight:700">Leaderboard</h1>
-    <p class="text-muted" style="margin-top:0.25rem">Rankings update as results come in</p>
+  <div class="page-header" style="margin-top:1.5rem">
+    <h1>Leaderboard</h1>
+    <p>Rankings update automatically as match results are entered.</p>
   </div>
 
-  <!-- Stats -->
   <div class="stats-row">
     <div class="stat-card">
       <div class="stat-value" id="playerCount">—</div>
@@ -34,7 +37,7 @@
     </div>
     <div class="stat-card">
       <div class="stat-value" id="roundsComplete">—</div>
-      <div class="stat-label">Rounds done</div>
+      <div class="stat-label">Rounds complete</div>
     </div>
     <div class="stat-card">
       <div class="stat-value" id="topScore">—</div>
@@ -42,18 +45,17 @@
     </div>
   </div>
 
-  <!-- Loading -->
   <div id="loading" class="loading-center">
     <div class="spinner"></div>
+    <span>Loading standings…</span>
   </div>
 
-  <!-- Table -->
   <div class="card" style="padding:0;overflow:hidden">
     <div id="tableWrap"></div>
   </div>
 
-  <div style="text-align:center;margin-top:1.5rem">
-    <a href="index.html" class="btn btn-ghost">Join the pool</a>
+  <div style="text-align:center;margin-top:1.25rem">
+    <a href="index.html" class="btn btn-ghost">Join the pool →</a>
   </div>
 
 </div>

@@ -3,24 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>World Cup 2026 — Office Predictions Pool</title>
+  <title>HCAP World Cup 2026 — Predictions Pool</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="bg-stars"></div>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="index.html" class="logo-wrap">
+      <img src="https://images.squarespace-cdn.com/content/v1/6334ad5adde1f249453ad01a/1664396655469-ZPR66CXLS6CHH5MLB32I/HCAP-Partners.png?format=300w"
+           alt="HCAP Partners" class="logo-img">
+      <div class="logo-divider"></div>
+      <span class="logo-label">World Cup 2026</span>
+    </a>
+    <a href="leaderboard.html" class="nav-link">Leaderboard</a>
+  </div>
+</nav>
 
 <div class="page" style="max-width:480px">
 
-  <div style="text-align:center;padding:3rem 0 2rem">
-    <div style="font-size:3rem;margin-bottom:1rem">🏆</div>
-    <h1 style="font-size:2rem;font-weight:700;margin-bottom:0.5rem">
-      World Cup <span style="color:var(--gold)">2026</span>
-    </h1>
-    <p class="text-muted">Office Predictions Pool</p>
+  <div class="hero" style="margin-top:2rem">
+    <div class="hero-icon">🏆</div>
+    <h1>World Cup <span>2026</span><br>Predictions Pool</h1>
+    <p style="margin-top:0.5rem">Pick the winners. Climb the rankings. Bragging rights included.</p>
   </div>
 
   <div class="card">
-    <h2 style="font-size:1.1rem;margin-bottom:1.25rem">Join the pool</h2>
+    <h2 style="font-size:1rem;font-weight:600;color:var(--navy);margin-bottom:1.25rem">Sign in to join</h2>
 
     <div id="alertBox" class="alert" style="display:none"></div>
 
@@ -31,7 +40,7 @@
       </div>
       <div class="form-group">
         <label for="emailInput">Work email</label>
-        <input type="email" id="emailInput" placeholder="you@company.com" required autocomplete="email">
+        <input type="email" id="emailInput" placeholder="you@hcap.com" required autocomplete="email">
       </div>
       <button type="submit" class="btn btn-primary">Enter the Pool →</button>
     </form>
@@ -41,7 +50,7 @@
     </p>
   </div>
 
-  <div style="text-align:center;margin-top:1.25rem">
+  <div style="text-align:center;margin-top:1rem">
     <a href="leaderboard.html" class="btn btn-ghost">View leaderboard</a>
   </div>
 

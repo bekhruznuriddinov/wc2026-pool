@@ -3,38 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin — World Cup 2026</title>
+  <title>Admin — HCAP World Cup 2026</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="bg-stars"></div>
 
-<div class="page wide">
-
-  <header class="site-header">
-    <a href="predictions.html" class="logo">
-      <span class="trophy">🏆</span> WC 2026 Pool
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="predictions.html" class="logo-wrap">
+      <img src="https://images.squarespace-cdn.com/content/v1/6334ad5adde1f249453ad01a/1664396655469-ZPR66CXLS6CHH5MLB32I/HCAP-Partners.png?format=300w"
+           alt="HCAP Partners" class="logo-img">
+      <div class="logo-divider"></div>
+      <span class="logo-label">World Cup 2026</span>
     </a>
     <div style="display:flex;align-items:center;gap:0.75rem">
       <span class="badge badge-open">Admin</span>
-      <span id="adminEmail" class="text-muted text-small"></span>
+      <span id="adminEmail" class="nav-link" style="cursor:default"></span>
     </div>
-    <a href="predictions.html" class="btn btn-ghost">← Back to pool</a>
-  </header>
+    <a href="predictions.html" class="nav-link">← Back to pool</a>
+  </div>
+</nav>
+
+<div class="page wide">
+
+  <div class="page-header" style="margin-top:1.5rem">
+    <h1>Admin panel</h1>
+    <p>Manage rounds, enter team names, record results, and recalculate scores.</p>
+  </div>
 
   <div id="adminAlert" class="alert" style="display:none;margin-bottom:1.5rem"></div>
 
   <!-- ROUNDS -->
   <div class="admin-section">
     <h2>Rounds</h2>
-    <div id="roundsTable" class="card" style="padding:0;overflow:auto;margin-bottom:1rem">
-      <div class="loading-center"><div class="spinner"></div></div>
+    <div class="card" style="padding:0;overflow:auto;margin-bottom:1rem">
+      <div id="roundsTable" class="loading-center"><div class="spinner"></div></div>
     </div>
 
     <details>
-      <summary style="cursor:pointer;color:var(--text-muted);font-size:0.9rem;padding:0.5rem 0">
-        + Create a new round
-      </summary>
+      <summary>+ Create a new round</summary>
       <div class="card" style="margin-top:0.75rem">
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.75rem;margin-bottom:0.75rem">
           <div class="form-group" style="margin:0">
@@ -71,15 +78,12 @@
   <!-- MATCHES -->
   <div class="admin-section">
     <h2>Matches</h2>
-    <div id="matchesTable" class="card" style="padding:0;overflow:auto;margin-bottom:1rem">
-      <div class="loading-center"><div class="spinner"></div></div>
+    <div class="card" style="padding:0;overflow:auto;margin-bottom:1rem">
+      <div id="matchesTable" class="loading-center"><div class="spinner"></div></div>
     </div>
 
-    <!-- Bulk add -->
     <details>
-      <summary style="cursor:pointer;color:var(--text-muted);font-size:0.9rem;padding:0.5rem 0">
-        + Bulk-create empty match slots
-      </summary>
+      <summary>+ Bulk-create empty match slots</summary>
       <div class="card" style="margin-top:0.75rem">
         <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:0.75rem;align-items:end">
           <div class="form-group" style="margin:0">
@@ -93,16 +97,13 @@
           <button id="bulkAddBtn" class="btn btn-secondary">Bulk add</button>
         </div>
         <p class="text-muted text-small" style="margin-top:0.75rem">
-          Creates empty "TBD vs TBD" slots. You can then fill in team names once the group stage ends.
+          Creates empty "TBD vs TBD" slots. Fill in team names once the group stage ends.
         </p>
       </div>
     </details>
 
-    <!-- Add single match -->
     <details style="margin-top:0.5rem">
-      <summary style="cursor:pointer;color:var(--text-muted);font-size:0.9rem;padding:0.5rem 0">
-        + Add a single match
-      </summary>
+      <summary>+ Add a single match</summary>
       <div class="card" style="margin-top:0.75rem">
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0.75rem;margin-bottom:0.75rem">
           <div class="form-group" style="margin:0">
@@ -132,8 +133,8 @@
   <!-- SCORES -->
   <div class="admin-section">
     <h2>Scores</h2>
-    <p class="text-muted" style="margin-bottom:1rem;font-size:0.9rem">
-      After entering all results for a round, recalculate scores to update the leaderboard.
+    <p class="text-muted" style="margin-bottom:1rem;font-size:0.875rem">
+      After entering all results for a round, recalculate to update the leaderboard.
     </p>
     <button id="recalcBtn" class="btn btn-secondary">Recalculate all scores</button>
   </div>
@@ -146,7 +147,7 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;max-width:480px;margin-bottom:1rem">
       <div class="form-group" style="margin:0">
         <label>Tournament name</label>
-        <input type="text" id="settingName" placeholder="WC 2026 Office Pool">
+        <input type="text" id="settingName" placeholder="HCAP WC 2026 Pool">
       </div>
       <div class="form-group" style="margin:0">
         <label>Buy-in amount ($)</label>
