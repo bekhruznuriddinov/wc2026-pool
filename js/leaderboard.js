@@ -1,3 +1,6 @@
+const _lbUser = getSession();
+if (_lbUser) renderUserBar(_lbUser);
+
 async function initLeaderboard() {
   document.getElementById("loading").style.display = "flex";
 
