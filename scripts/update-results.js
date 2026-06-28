@@ -21,15 +21,17 @@ function normalize(name) { return TEAM_MAP[name] || name; }
 
 // Maps football-data.org stage names → our Firestore round IDs
 const STAGE_TO_ROUND = {
-  "ROUND_OF_16":       "r16",
-  "QUARTER_FINALS":    "qf",
-  "SEMI_FINALS":       "sf",
-  "FINAL":             "final",
-  "THIRD_PLACE_MATCH": "third",
+  "LAST_32":        "r32",
+  "LAST_16":        "r16",
+  "QUARTER_FINALS": "qf",
+  "SEMI_FINALS":    "sf",
+  "FINAL":          "final",
+  "THIRD_PLACE":    "third",
 };
 
 // Metadata for auto-creating round documents
 const ROUND_META = {
+  r32:   { name: "Round of 32",    order: 1 },
   r16:   { name: "Round of 16",    order: 2 },
   qf:    { name: "Quarter-finals", order: 3 },
   sf:    { name: "Semi-finals",    order: 4 },
