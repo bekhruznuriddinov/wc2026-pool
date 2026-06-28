@@ -1,0 +1,33 @@
+name: Update WC 2026 Match Results
+
+on:
+  schedule:
+    # Runs at 7:00 AM and 7:00 PM UTC every day
+    # Adjust times if you want earlier/later updates
+    - cron: '0 7,19 * * *'
+  workflow_dispatch:
+    # Also allows you to trigger it manually from the GitHub Actions tab
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: scripts
+
+      - name: Fetch and write match results
+        run: node update-results.js
+        working-directory: scripts
+        env:
+          FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
