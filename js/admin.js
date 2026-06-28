@@ -13,7 +13,54 @@ if (!user || user.email !== ADMIN_EMAIL) {
 
 async function initAdmin() {
   document.getElementById("adminEmail").textContent = user.email;
-  await Promise.all([loadRoundsAdmin(), loadMatchesAdmin()]);
+  await Promise.all([loadPlayersAdmin(), loadRoundsAdmin(), loadMatchesAdmin()]);
+}
+
+// ---- PLAYERS ----
+async function loadPlayersAdmin() {
+  const snap = await db.collection("users").orderBy("joinedAt", "asc").get();
+  const players = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderPlayersTable(players);
+}
+
+function renderPlayersTable(players) {
+  const el = document.getElementById("playersTable");
+  if (players.length === 0) {
+    el.innerHTML = `<p class="text-muted" style="padding:1rem">No players yet.</p>`;
+    return;
+  }
+  el.innerHTML = `
+    <table class="leaderboard-table" style="width:100%">
+      <thead><tr><th>Name</th><th>Email</th><th>Points</th><th>Joined</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${players.map(p => `
+          <tr>
+            <td>
+              <div class="flex">
+                <div class="user-avatar" style="width:28px;height:28px;font-size:0.75rem">${initials(p.name)}</div>
+                <span>${p.name}</span>
+              </div>
+            </td>
+            <td class="text-muted text-small">${p.email || "—"}</td>
+            <td>${p.totalPoints || 0}</td>
+            <td class="text-muted text-small">${p.joinedAt ? formatDate(p.joinedAt.toDate ? p.joinedAt.toDate() : new Date(p.joinedAt)) : "—"}</td>
+            <td>
+              ${p.email !== user.email ? `<button class="btn btn-danger btn-sm" onclick="deletePlayer('${p.id}', '${p.name.replace(/'/g, "\\'")}')">Delete</button>` : `<span class="text-muted text-small">you</span>`}
+            </td>
+          </tr>`).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+async function deletePlayer(userId, name) {
+  if (!confirm(`Delete "${name}" and all their predictions? This cannot be undone.`)) return;
+  await Promise.all([
+    db.collection("users").doc(userId).delete(),
+    db.collection("predictions").doc(userId).delete()
+  ]);
+  showAdminAlert(`"${name}" has been removed.`, "success");
+  await loadPlayersAdmin();
 }
 
 // ---- ROUNDS ----
