@@ -117,7 +117,7 @@ function renderRound(round) {
     if (rem > 0) {
       alertHtml = `<div class="alert alert-warning"><strong>${rem} match${rem > 1 ? "es" : ""} unpicked</strong> — save before kickoff. Score predictions are optional but earn bonus points.</div>`;
     } else {
-      alertHtml = `<div class="alert alert-success">All open matches picked! Don't forget to save.</div>`;
+      alertHtml = `<div class="alert alert-success">All open matches picked!</div>`;
     }
   }
   document.getElementById("roundAlert").innerHTML = alertHtml;
