@@ -95,12 +95,17 @@ function renderRound(round) {
     const earned = calcRoundScore(round.id);
     alertHtml = `<div class="alert alert-info">Round complete — you scored <strong>${earned} pts</strong> in this round.</div>`;
   } else if (isOpen) {
-    const picked = allMatches.filter(m => myPicks[m.id]?.winner).length;
-    const rem = allMatches.filter(m => !myPicks[m.id]?.winner && m.team1 !== "TBD").length;
+    const now = new Date();
+    const pickable = allMatches.filter(m => {
+      if (!m.team1 || m.team1 === "TBD") return false;
+      const ko = m.kickoff ? (m.kickoff.toDate ? m.kickoff.toDate() : new Date(m.kickoff)) : null;
+      return !ko || now < ko;
+    });
+    const rem = pickable.filter(m => !myPicks[m.id]?.winner).length;
     if (rem > 0) {
-      alertHtml = `<div class="alert alert-warning"><strong>${rem} match${rem > 1 ? "es" : ""} unpicked</strong> — save before the deadline. Score predictions are optional but earn bonus points.</div>`;
+      alertHtml = `<div class="alert alert-warning"><strong>${rem} match${rem > 1 ? "es" : ""} unpicked</strong> — save before kickoff. Score predictions are optional but earn bonus points.</div>`;
     } else {
-      alertHtml = `<div class="alert alert-success">All matches picked! Don't forget to save.</div>`;
+      alertHtml = `<div class="alert alert-success">All open matches picked! Don't forget to save.</div>`;
     }
   }
   document.getElementById("roundAlert").innerHTML = alertHtml;
@@ -122,7 +127,15 @@ function matchCard(match, round) {
   const p = myPicks[match.id] || {};
   const result = match.result;
   const isOpen = round.status === "open";
-  const isLocked = !isOpen;
+
+  // Per-match kickoff enforcement
+  const kickoffVal = match.kickoff;
+  const kickoff = kickoffVal
+    ? (kickoffVal.toDate ? kickoffVal.toDate() : new Date(kickoffVal))
+    : null;
+  const started = kickoff && new Date() > kickoff;
+
+  const isLocked = !isOpen || started;
   const tbd1 = !match.team1 || match.team1 === "TBD";
   const tbd2 = !match.team2 || match.team2 === "TBD";
 
@@ -136,7 +149,13 @@ function matchCard(match, round) {
     </div>`;
   }
 
-  const clickable = isOpen && !tbd1 && !tbd2;
+  const clickable = isOpen && !tbd1 && !tbd2 && !started;
+
+  const kickoffBadge = started && !result
+    ? `<span style="margin-left:6px;font-size:0.65rem;background:rgba(245,158,11,0.15);color:var(--gold);padding:1px 6px;border-radius:4px;font-weight:600">IN PROGRESS</span>`
+    : kickoff && !started && !result
+      ? `<span style="margin-left:6px;font-size:0.65rem;color:var(--text-muted)">${kickoff.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</span>`
+      : "";
 
   function teamClass(side) {
     if (result) {
@@ -176,7 +195,7 @@ function matchCard(match, round) {
 
   return `
   <div class="match-card" id="match-${match.id}">
-    <div class="match-number">Match ${match.matchNum}${match.date ? " &nbsp;·&nbsp; " + match.date : ""}</div>
+    <div class="match-number">Match ${match.matchNum}${match.date ? " &nbsp;·&nbsp; " + match.date : ""}${kickoffBadge}</div>
     <div class="match-teams">
       <button class="team-btn ${teamClass("team1")} ${isLocked ? "locked" : ""}"
         ${clickable ? `onclick="pick('${match.id}','team1')"` : "disabled"}
@@ -265,9 +284,14 @@ function rerenderCard(matchId) {
 }
 
 function updatePickCounter() {
-  const picked = allMatches.filter(m => myPicks[m.id]?.winner).length;
-  const total = allMatches.filter(m => m.team1 !== "TBD").length;
-  document.getElementById("pickCount").textContent = `${picked}/${total} picked`;
+  const now = new Date();
+  const pickable = allMatches.filter(m => {
+    if (!m.team1 || m.team1 === "TBD") return false;
+    const ko = m.kickoff ? (m.kickoff.toDate ? m.kickoff.toDate() : new Date(m.kickoff)) : null;
+    return !ko || now < ko;
+  });
+  const picked = pickable.filter(m => myPicks[m.id]?.winner).length;
+  document.getElementById("pickCount").textContent = `${picked}/${pickable.length} picked`;
   document.getElementById("submitBtn").disabled = picked === 0;
 }
 

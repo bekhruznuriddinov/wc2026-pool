@@ -137,7 +137,13 @@
     <p class="text-muted" style="margin-bottom:1rem;font-size:0.875rem">
       After entering all results for a round, recalculate to update the leaderboard.
     </p>
-    <button id="recalcBtn" class="btn btn-secondary">Recalculate all scores</button>
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center">
+      <button id="recalcBtn" class="btn btn-secondary">Recalculate all scores</button>
+      <button id="setKickoffsBtn" class="btn btn-secondary" onclick="setR32Kickoffs()">Set R32 kickoff times</button>
+    </div>
+    <p class="text-muted text-small" style="margin-top:0.5rem">
+      "Set R32 kickoff times" stamps every R32 match with the official UTC kickoff time so individual games lock automatically at kickoff — no manual closing needed.
+    </p>
   </div>
 
   <hr class="divider">

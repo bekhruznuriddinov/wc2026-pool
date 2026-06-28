@@ -239,6 +239,57 @@ document.getElementById("bulkAddBtn").addEventListener("click", async () => {
   await loadMatchesAdmin();
 });
 
+// ---- R32 KICKOFF TIMES ----
+// All times UTC. Source: official FIFA 2026 schedule (ET = UTC-4 in summer)
+const R32_KICKOFFS = [
+  { teams: ["South Africa", "Canada"],           kickoff: "2026-06-28T19:00:00Z" },
+  { teams: ["Brazil", "Japan"],                  kickoff: "2026-06-29T17:00:00Z" },
+  { teams: ["Germany", "Paraguay"],              kickoff: "2026-06-29T20:30:00Z" },
+  { teams: ["Netherlands", "Morocco"],           kickoff: "2026-06-30T01:00:00Z" },
+  { teams: ["Ivory Coast", "Norway"],            kickoff: "2026-06-30T17:00:00Z" },
+  { teams: ["France", "Sweden"],                 kickoff: "2026-06-30T21:00:00Z" },
+  { teams: ["Mexico", "Ecuador"],                kickoff: "2026-07-01T01:00:00Z" },
+  { teams: ["England", "Congo DR"],              kickoff: "2026-07-01T16:00:00Z" },
+  { teams: ["Belgium", "Senegal"],               kickoff: "2026-07-01T20:00:00Z" },
+  { teams: ["USA", "Bosnia & Herzegovina"],      kickoff: "2026-07-02T00:00:00Z" },
+  { teams: ["Spain", "Austria"],                 kickoff: "2026-07-02T19:00:00Z" },
+  { teams: ["Portugal", "Croatia"],              kickoff: "2026-07-02T23:00:00Z" },
+  { teams: ["Switzerland", "Algeria"],           kickoff: "2026-07-03T03:00:00Z" },
+  { teams: ["Australia", "Egypt"],               kickoff: "2026-07-03T18:00:00Z" },
+  { teams: ["Argentina", "Cape Verde"],          kickoff: "2026-07-03T22:00:00Z" },
+  { teams: ["Colombia", "Ghana"],                kickoff: "2026-07-04T01:30:00Z" },
+];
+
+async function setR32Kickoffs() {
+  const btn = document.getElementById("setKickoffsBtn");
+  btn.disabled = true; btn.textContent = "Setting…";
+  try {
+    const snap = await db.collection("matches").where("roundId", "==", "r32").get();
+    const batch = db.batch();
+    let count = 0;
+
+    snap.docs.forEach(doc => {
+      const { team1, team2 } = doc.data();
+      const entry = R32_KICKOFFS.find(e =>
+        e.teams.includes(team1) && e.teams.includes(team2)
+      );
+      if (entry) {
+        batch.update(doc.ref, { kickoff: new Date(entry.kickoff) });
+        count++;
+      }
+    });
+
+    await batch.commit();
+    showAdminAlert(`Kickoff times set for ${count}/16 R32 matches.`, "success");
+    await loadMatchesAdmin();
+  } catch (err) {
+    console.error(err);
+    showAdminAlert("Failed to set kickoff times.", "error");
+  } finally {
+    btn.disabled = false; btn.textContent = "Set R32 kickoff times";
+  }
+}
+
 // ---- SCORE RECALCULATION ----
 async function recalcScores(roundId) {
   const btn = document.getElementById("recalcBtn");
