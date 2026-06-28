@@ -17,6 +17,22 @@ const db = firebase.firestore();
 // Admin email — whoever should have access to admin.html
 const ADMIN_EMAIL = "bek@hcap.com";
 
+// Country flags
+const FLAGS = {
+  "South Africa": "🇿🇦", "Canada": "🇨🇦", "Germany": "🇩🇪",
+  "Paraguay": "🇵🇾", "Netherlands": "🇳🇱", "Morocco": "🇲🇦",
+  "Brazil": "🇧🇷", "Japan": "🇯🇵", "France": "🇫🇷",
+  "Sweden": "🇸🇪", "Ivory Coast": "🇨🇮", "Norway": "🇳🇴",
+  "Mexico": "🇲🇽", "Ecuador": "🇪🇨", "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+  "DR Congo": "🇨🇩", "Congo DR": "🇨🇩", "USA": "🇺🇸",
+  "Bosnia & Herzegovina": "🇧🇦", "Belgium": "🇧🇪", "Senegal": "🇸🇳",
+  "Portugal": "🇵🇹", "Croatia": "🇭🇷", "Spain": "🇪🇸",
+  "Austria": "🇦🇹", "Switzerland": "🇨🇭", "Algeria": "🇩🇿",
+  "Argentina": "🇦🇷", "Cape Verde": "🇨🇻", "Colombia": "🇨🇴",
+  "Ghana": "🇬🇭", "Australia": "🇦🇺", "Egypt": "🇪🇬",
+};
+function flag(name) { return FLAGS[name] || "🏳️"; }
+
 // Points per round
 const ROUND_POINTS = {
   r32: 1,

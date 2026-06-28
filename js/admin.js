@@ -116,14 +116,20 @@ function renderMatchesAdmin(matches) {
             <td>${m.matchNum}</td>
             <td class="text-muted text-small">${m.roundId}</td>
             <td>
-              <input type="text" value="${m.team1 || ""}" placeholder="Team 1"
-                style="width:120px;padding:0.4rem 0.6rem;font-size:0.85rem"
-                onchange="updateMatchField('${m.id}','team1',this.value)">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span>${flag(m.team1)}</span>
+                <input type="text" value="${m.team1 || ""}" placeholder="Team 1"
+                  style="width:110px;padding:0.4rem 0.6rem;font-size:0.85rem"
+                  onchange="updateMatchField('${m.id}','team1',this.value)">
+              </div>
             </td>
             <td>
-              <input type="text" value="${m.team2 || ""}" placeholder="Team 2"
-                style="width:120px;padding:0.4rem 0.6rem;font-size:0.85rem"
-                onchange="updateMatchField('${m.id}','team2',this.value)">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span>${flag(m.team2)}</span>
+                <input type="text" value="${m.team2 || ""}" placeholder="Team 2"
+                  style="width:110px;padding:0.4rem 0.6rem;font-size:0.85rem"
+                  onchange="updateMatchField('${m.id}','team2',this.value)">
+              </div>
             </td>
             <td>
               <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">

@@ -48,9 +48,9 @@ body {
 }
 
 .logo-wrap { display: flex; align-items: center; gap: 14px; text-decoration: none; }
-.logo-img { height: 32px; }
-.logo-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.2); }
-.logo-label { color: rgba(255,255,255,0.85); font-size: 0.85rem; font-weight: 500; letter-spacing: 0.01em; }
+.logo-img { height: 28px; filter: brightness(0) invert(1); opacity: 0.92; }
+.logo-divider { width: 1px; height: 22px; background: rgba(255,255,255,0.25); }
+.logo-label { color: rgba(255,255,255,0.75); font-size: 0.82rem; font-weight: 400; letter-spacing: 0.03em; }
 
 nav { display: flex; gap: 0.25rem; }
 .nav-link {
@@ -304,20 +304,23 @@ select option { background: #fff; color: var(--text); }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.7rem 0.5rem;
+  gap: 0.3rem;
+  padding: 0.8rem 0.5rem;
   background: var(--bg);
   border: 2px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   color: var(--text);
   transition: all 0.15s;
   width: 100%;
   text-align: center;
+  min-height: 82px;
+  justify-content: center;
 }
 .team-btn:hover:not(:disabled) {
   background: #EBF2FB;
   border-color: var(--navy-2);
+  transform: translateY(-1px);
 }
 .team-btn.selected {
   background: #E8F4EE;
@@ -333,10 +336,11 @@ select option { background: #fff; color: var(--text); }
   background: var(--bg);
   border-color: var(--border);
   color: var(--text-dim);
-  text-decoration: line-through;
+  opacity: 0.6;
 }
 .team-btn.locked { cursor: default; }
-.team-name { font-size: 0.88rem; font-weight: 600; line-height: 1.2; }
+.team-flag { font-size: 1.6rem; line-height: 1; }
+.team-name { font-size: 0.82rem; font-weight: 600; line-height: 1.2; }
 
 .vs {
   font-size: 0.7rem;

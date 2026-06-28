@@ -180,25 +180,26 @@ function matchCard(match, round) {
       <button class="team-btn ${teamClass("team1")} ${isLocked ? "locked" : ""}"
         ${clickable ? `onclick="pick('${match.id}','team1')"` : "disabled"}
         style="${!clickable ? "cursor:default" : ""}">
+        <span class="team-flag">${flag(match.team1)}</span>
         <span class="team-name">${match.team1}</span>
       </button>
 
       <div class="score-center">
         ${clickable ? `
-          <input class="score-input" type="number" min="0" max="20" placeholder="0"
+          <input class="score-input" type="number" min="0" max="20" placeholder="–"
             value="${s1val}"
             oninput="updateScore('${match.id}','score1',this.value)"
             onclick="event.stopPropagation()">
-          <span class="score-dash">–</span>
-          <input class="score-input" type="number" min="0" max="20" placeholder="0"
+          <span class="score-dash">:</span>
+          <input class="score-input" type="number" min="0" max="20" placeholder="–"
             value="${s2val}"
             oninput="updateScore('${match.id}','score2',this.value)"
             onclick="event.stopPropagation()">
         ` : `
           <span class="score-static">${
-            (match.score1 !== undefined && match.score2 !== undefined)
-              ? `${match.score1}–${match.score2}`
-              : "VS"
+            (match.score1 !== undefined && match.score2 !== undefined && match.score1 !== null)
+              ? `${match.score1} : ${match.score2}`
+              : "vs"
           }</span>
         `}
       </div>
@@ -206,6 +207,7 @@ function matchCard(match, round) {
       <button class="team-btn ${teamClass("team2")} ${isLocked ? "locked" : ""}"
         ${clickable ? `onclick="pick('${match.id}','team2')"` : "disabled"}
         style="${!clickable ? "cursor:default" : ""}">
+        <span class="team-flag">${flag(match.team2)}</span>
         <span class="team-name">${match.team2}</span>
       </button>
     </div>
