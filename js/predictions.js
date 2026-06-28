@@ -3,6 +3,7 @@ renderUserBar(user);
 
 let allMatches = [];
 let myPicks = {};     // { matchId: { winner: 'team1', score1: 2, score2: 1 } }
+let peerPicks = {};   // { matchId: { team1: ['Alice', 'Bob'], team2: ['Carol'] } }
 let currentRoundId = null;
 
 async function init() {
@@ -19,7 +20,10 @@ async function init() {
 
     buildRoundTabs(rounds);
 
-    const picksDoc = await db.collection("predictions").doc(user.userId).get();
+    const [picksDoc] = await Promise.all([
+      db.collection("predictions").doc(user.userId).get(),
+      loadPeerPicks()
+    ]);
     myPicks = picksDoc.exists ? (picksDoc.data().picks || {}) : {};
 
     const openRound = rounds.find(r => r.status === "open");
@@ -123,6 +127,40 @@ function renderRound(round) {
   }
 }
 
+async function loadPeerPicks() {
+  try {
+    const [usersSnap, predsSnap] = await Promise.all([
+      db.collection("users").get(),
+      db.collection("predictions").get()
+    ]);
+    const names = {};
+    usersSnap.docs.forEach(d => { names[d.id] = d.data().name; });
+
+    peerPicks = {};
+    predsSnap.docs.forEach(doc => {
+      if (doc.id === user.userId) return; // skip self
+      const name = names[doc.id];
+      if (!name) return;
+      Object.entries(doc.data().picks || {}).forEach(([matchId, pick]) => {
+        const winner = (pick && typeof pick === "object") ? pick.winner : pick;
+        if (winner !== "team1" && winner !== "team2") return;
+        if (!peerPicks[matchId]) peerPicks[matchId] = { team1: [], team2: [] };
+        peerPicks[matchId][winner].push(name);
+      });
+    });
+  } catch (e) {
+    console.warn("Could not load peer picks", e);
+  }
+}
+
+function pickerLabel(names) {
+  if (!names || names.length === 0) return "";
+  const first = names[0].split(" ")[0];
+  if (names.length === 1) return `${first} picked`;
+  if (names.length === 2) return `${first} & ${names[1].split(" ")[0]} picked`;
+  return `${first} & ${names.length - 1} others picked`;
+}
+
 function matchCard(match, round) {
   const p = myPicks[match.id] || {};
   const result = match.result;
@@ -192,6 +230,8 @@ function matchCard(match, round) {
 
   const s1val = (p.score1 !== undefined && p.score1 !== null) ? p.score1 : "";
   const s2val = (p.score2 !== undefined && p.score2 !== null) ? p.score2 : "";
+  const peers1 = peerPicks[match.id]?.team1 || [];
+  const peers2 = peerPicks[match.id]?.team2 || [];
 
   return `
   <div class="match-card" id="match-${match.id}">
@@ -202,6 +242,7 @@ function matchCard(match, round) {
         style="${!clickable ? "cursor:default" : ""}">
         <span class="team-flag">${flag(match.team1)}</span>
         <span class="team-name">${match.team1}</span>
+        ${peers1.length ? `<span class="team-pickers">${pickerLabel(peers1)}</span>` : ""}
       </button>
 
       <div class="score-center">
@@ -229,6 +270,7 @@ function matchCard(match, round) {
         style="${!clickable ? "cursor:default" : ""}">
         <span class="team-flag">${flag(match.team2)}</span>
         <span class="team-name">${match.team2}</span>
+        ${peers2.length ? `<span class="team-pickers">${pickerLabel(peers2)}</span>` : ""}
       </button>
     </div>
     ${(result || p.winner) ? `
