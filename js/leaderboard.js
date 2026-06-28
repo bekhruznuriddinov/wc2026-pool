@@ -24,10 +24,10 @@ async function initLeaderboard() {
     const predictions = {};
     predsSnap.docs.forEach(d => { predictions[d.id] = d.data(); });
 
-    // Total decided matches across all active rounds
+    // Total decided matches across all active rounds (freebies always count)
     const totalDecided = Object.values(matches).filter(m => {
       const round = rounds.find(r => r.id === m.roundId);
-      return round && round.status !== "upcoming" && m.result;
+      return round && round.status !== "upcoming" && (m.result || m.freebie);
     }).length;
 
     // Calculate scores for each user
@@ -46,15 +46,17 @@ async function initLeaderboard() {
         if (round.status === "upcoming") return;
         let rScore = 0;
         Object.entries(matches).forEach(([matchId, match]) => {
-          if (match.roundId !== round.id || !match.result) return;
+          if (match.roundId !== round.id) return;
 
-          // Freebie: everyone gets base round points regardless of pick
+          // Freebie: everyone gets base round points, no result needed
           if (match.freebie) {
             statPicked++;
             statCorrect++;
             rScore += ROUND_POINTS[round.id];
             return;
           }
+
+          if (!match.result) return;
 
           const pick = picks[matchId];
           if (!pick) return;
