@@ -58,7 +58,7 @@
 <script src="js/firebase.js"></script>
 <script src="js/auth.js"></script>
 <script>
-const ROUNDS = [
+const SEED_ROUNDS = [
   { id: "r32",   name: "Round of 32",    order: 1, points: 1,  status: "upcoming" },
   { id: "r16",   name: "Round of 16",    order: 2, points: 2,  status: "upcoming" },
   { id: "qf",    name: "Quarter-finals", order: 3, points: 4,  status: "upcoming" },
@@ -133,7 +133,7 @@ async function runSeed() {
   try {
     // 1. Create rounds
     log("Creating rounds…");
-    for (const round of ROUNDS) {
+    for (const round of SEED_ROUNDS) {
       await db.collection("rounds").doc(round.id).set(round);
       log(`  ✓ ${round.name}`);
     }
