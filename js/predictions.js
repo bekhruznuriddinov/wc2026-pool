@@ -149,6 +149,7 @@ function matchCard(match, round, isOpen) {
   const isLocked = round.status !== "open";
   const tbd1 = !match.team1 || match.team1 === "TBD";
   const tbd2 = !match.team2 || match.team2 === "TBD";
+  const bothTBD = tbd1 && tbd2;
 
   function teamClass(side) {
     if (isLocked && result) {
@@ -168,9 +169,20 @@ function matchCard(match, round, isOpen) {
 
   const clickable = isOpen && !isLocked && !tbd1 && !tbd2;
 
+  // If both teams TBD, show the bracket label instead of match buttons
+  if (bothTBD) {
+    return `
+    <div class="match-card" id="match-${match.id}" style="opacity:0.6">
+      <div class="match-number">Match ${match.matchNum} &nbsp;·&nbsp; ${match.date || ""}</div>
+      <div style="font-size:0.85rem;color:var(--text-muted);text-align:center;padding:0.5rem 0">
+        ${match.bracketLabel || "TBD vs TBD"}
+      </div>
+    </div>`;
+  }
+
   return `
   <div class="match-card" id="match-${match.id}">
-    <div class="match-number">Match ${match.matchNum}</div>
+    <div class="match-number">Match ${match.matchNum}${match.date ? " &nbsp;·&nbsp; " + match.date : ""}</div>
     <div class="match-teams">
       <button class="team-btn ${teamClass("team1")} ${isLocked ? "locked" : ""}"
         ${clickable ? `onclick="pick('${match.id}', 'team1')"` : "disabled"}

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seed Data — HCAP World Cup 2026</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="predictions.html" class="logo-wrap">
+      <img src="https://images.squarespace-cdn.com/content/v1/6334ad5adde1f249453ad01a/1664396655469-ZPR66CXLS6CHH5MLB32I/HCAP-Partners.png?format=300w"
+           alt="HCAP Partners" class="logo-img">
+      <div class="logo-divider"></div>
+      <span class="logo-label">World Cup 2026</span>
+    </a>
+    <a href="admin.html" class="nav-link">← Admin</a>
+  </div>
+</nav>
+
+<div class="page" style="max-width:600px">
+  <div class="page-header" style="margin-top:1.5rem">
+    <h1>Seed tournament data</h1>
+    <p>One-time setup — populates all rounds and matches for the 2026 World Cup knockout stage.</p>
+  </div>
+
+  <div class="alert alert-warning" style="margin-bottom:1.5rem">
+    Only run this once. Running it again will create duplicate matches.
+    After seeding, go to <a href="admin.html" style="color:inherit;font-weight:600">admin.html</a> to open the Round of 32 for predictions.
+  </div>
+
+  <div class="card">
+    <h2 style="font-size:1rem;font-weight:600;color:var(--navy);margin-bottom:1rem">What this will create</h2>
+    <ul style="font-size:0.875rem;color:var(--text-muted);line-height:2;padding-left:1.25rem">
+      <li>6 rounds (R32 → R16 → QF → SF → 3rd Place → Final)</li>
+      <li>16 Round of 32 matches with real teams</li>
+      <li>8 Round of 16 slots (bracket pairings from R32)</li>
+      <li>4 Quarter-final slots</li>
+      <li>2 Semi-final slots</li>
+      <li>3rd Place and Final slots</li>
+    </ul>
+
+    <hr class="divider">
+
+    <div id="log" style="font-size:0.8rem;font-family:monospace;color:var(--text-muted);background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:1rem;min-height:60px;max-height:260px;overflow-y:auto;margin-bottom:1rem;display:none"></div>
+
+    <button id="seedBtn" class="btn btn-primary" onclick="runSeed()">Seed tournament data</button>
+    <p id="doneMsg" style="display:none;margin-top:1rem;font-weight:600;color:var(--green)">
+      ✓ Done! <a href="admin.html" style="color:var(--green)">Go to admin panel →</a>
+    </p>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="js/firebase.js"></script>
+<script src="js/auth.js"></script>
+<script>
+const ROUNDS = [
+  { id: "r32",   name: "Round of 32",    order: 1, points: 1,  status: "upcoming" },
+  { id: "r16",   name: "Round of 16",    order: 2, points: 2,  status: "upcoming" },
+  { id: "qf",    name: "Quarter-finals", order: 3, points: 4,  status: "upcoming" },
+  { id: "sf",    name: "Semi-finals",    order: 4, points: 8,  status: "upcoming" },
+  { id: "third", name: "3rd Place",      order: 5, points: 4,  status: "upcoming" },
+  { id: "final", name: "Final",          order: 6, points: 16, status: "upcoming" },
+];
+
+// Round of 32 — all 16 confirmed matchups
+const R32 = [
+  { matchNum: 1,  team1: "South Africa", team2: "Canada",               date: "Jun 28" },
+  { matchNum: 2,  team1: "Germany",      team2: "Paraguay",             date: "Jun 29" },
+  { matchNum: 3,  team1: "Netherlands",  team2: "Morocco",              date: "Jun 29" },
+  { matchNum: 4,  team1: "Brazil",       team2: "Japan",                date: "Jun 29" },
+  { matchNum: 5,  team1: "France",       team2: "Sweden",               date: "Jun 30" },
+  { matchNum: 6,  team1: "Ivory Coast",  team2: "Norway",               date: "Jun 30" },
+  { matchNum: 7,  team1: "Mexico",       team2: "Ecuador",              date: "Jun 30" },
+  { matchNum: 8,  team1: "England",      team2: "DR Congo",             date: "Jul 1"  },
+  { matchNum: 9,  team1: "USA",          team2: "Bosnia & Herzegovina", date: "Jul 1"  },
+  { matchNum: 10, team1: "Belgium",      team2: "Senegal",              date: "Jul 1"  },
+  { matchNum: 11, team1: "Portugal",     team2: "Croatia",              date: "Jul 2"  },
+  { matchNum: 12, team1: "Spain",        team2: "Austria",              date: "Jul 2"  },
+  { matchNum: 13, team1: "Switzerland",  team2: "Algeria",              date: "Jul 2"  },
+  { matchNum: 14, team1: "Argentina",    team2: "Cape Verde",           date: "Jul 3"  },
+  { matchNum: 15, team1: "Colombia",     team2: "Ghana",                date: "Jul 3"  },
+  { matchNum: 16, team1: "Australia",    team2: "Egypt",                date: "Jul 3"  },
+];
+
+// Round of 16 — bracket feeds from R32 match numbers
+// label shows which R32 matches feed in
+const R16 = [
+  { matchNum: 1, label: "W(M2) vs W(M5)",  feed: "Winner Match 2 vs Winner Match 5",  date: "Jul 4"  },
+  { matchNum: 2, label: "W(M1) vs W(M3)",  feed: "Winner Match 1 vs Winner Match 3",  date: "Jul 4"  },
+  { matchNum: 3, label: "W(M4) vs W(M6)",  feed: "Winner Match 4 vs Winner Match 6",  date: "Jul 5"  },
+  { matchNum: 4, label: "W(M7) vs W(M8)",  feed: "Winner Match 7 vs Winner Match 8",  date: "Jul 5"  },
+  { matchNum: 5, label: "W(M11) vs W(M12)", feed: "Winner Match 11 vs Winner Match 12", date: "Jul 6" },
+  { matchNum: 6, label: "W(M9) vs W(M10)", feed: "Winner Match 9 vs Winner Match 10", date: "Jul 6"  },
+  { matchNum: 7, label: "W(M14) vs W(M16)", feed: "Winner Match 14 vs Winner Match 16", date: "Jul 7" },
+  { matchNum: 8, label: "W(M13) vs W(M15)", feed: "Winner Match 13 vs Winner Match 15", date: "Jul 7" },
+];
+
+// Quarter-finals — feed from R16 match numbers
+const QF = [
+  { matchNum: 1, feed: "Winner R16 Match 1 vs Winner R16 Match 2", date: "Jul 9"  },
+  { matchNum: 2, feed: "Winner R16 Match 5 vs Winner R16 Match 6", date: "Jul 9"  },
+  { matchNum: 3, feed: "Winner R16 Match 3 vs Winner R16 Match 4", date: "Jul 10" },
+  { matchNum: 4, feed: "Winner R16 Match 7 vs Winner R16 Match 8", date: "Jul 10" },
+];
+
+// Semi-finals
+const SF = [
+  { matchNum: 1, feed: "Winner QF Match 1 vs Winner QF Match 2", date: "Jul 14" },
+  { matchNum: 2, feed: "Winner QF Match 3 vs Winner QF Match 4", date: "Jul 15" },
+];
+
+// 3rd place + Final
+const THIRD = [{ matchNum: 1, feed: "Loser SF Match 1 vs Loser SF Match 2", date: "Jul 18" }];
+const FINAL = [{ matchNum: 1, feed: "Winner SF Match 1 vs Winner SF Match 2", date: "Jul 19" }];
+
+function log(msg) {
+  const el = document.getElementById("log");
+  el.style.display = "block";
+  el.innerHTML += msg + "\n";
+  el.scrollTop = el.scrollHeight;
+}
+
+async function runSeed() {
+  const btn = document.getElementById("seedBtn");
+  btn.disabled = true;
+  btn.textContent = "Seeding…";
+
+  try {
+    // 1. Create rounds
+    log("Creating rounds…");
+    for (const round of ROUNDS) {
+      await db.collection("rounds").doc(round.id).set(round);
+      log(`  ✓ ${round.name}`);
+    }
+
+    // 2. R32 matches
+    log("\nCreating Round of 32 matches…");
+    for (const m of R32) {
+      await db.collection("matches").add({
+        roundId: "r32", matchNum: m.matchNum,
+        team1: m.team1, team2: m.team2,
+        date: m.date, result: null, status: "pending",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      log(`  ✓ M${m.matchNum}: ${m.team1} vs ${m.team2}`);
+    }
+
+    // 3. R16 matches (TBD teams, bracket labels stored)
+    log("\nCreating Round of 16 slots…");
+    for (const m of R16) {
+      await db.collection("matches").add({
+        roundId: "r16", matchNum: m.matchNum,
+        team1: "TBD", team2: "TBD",
+        bracketLabel: m.feed, date: m.date,
+        result: null, status: "pending",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      log(`  ✓ R16 M${m.matchNum}: ${m.feed}`);
+    }
+
+    // 4. QF slots
+    log("\nCreating Quarter-final slots…");
+    for (const m of QF) {
+      await db.collection("matches").add({
+        roundId: "qf", matchNum: m.matchNum,
+        team1: "TBD", team2: "TBD",
+        bracketLabel: m.feed, date: m.date,
+        result: null, status: "pending",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      log(`  ✓ QF M${m.matchNum}: ${m.feed}`);
+    }
+
+    // 5. SF slots
+    log("\nCreating Semi-final slots…");
+    for (const m of SF) {
+      await db.collection("matches").add({
+        roundId: "sf", matchNum: m.matchNum,
+        team1: "TBD", team2: "TBD",
+        bracketLabel: m.feed, date: m.date,
+        result: null, status: "pending",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      log(`  ✓ SF M${m.matchNum}: ${m.feed}`);
+    }
+
+    // 6. 3rd place
+    log("\nCreating 3rd Place slot…");
+    await db.collection("matches").add({
+      roundId: "third", matchNum: 1,
+      team1: "TBD", team2: "TBD",
+      bracketLabel: THIRD[0].feed, date: THIRD[0].date,
+      result: null, status: "pending",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    log(`  ✓ 3rd Place: ${THIRD[0].feed}`);
+
+    // 7. Final
+    log("\nCreating Final slot…");
+    await db.collection("matches").add({
+      roundId: "final", matchNum: 1,
+      team1: "TBD", team2: "TBD",
+      bracketLabel: FINAL[0].feed, date: FINAL[0].date,
+      result: null, status: "pending",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    log(`  ✓ Final: ${FINAL[0].feed}`);
+
+    log("\n✓ All done!");
+    document.getElementById("doneMsg").style.display = "block";
+    btn.textContent = "Done";
+
+  } catch (err) {
+    console.error(err);
+    log(`\n✗ Error: ${err.message}`);
+    btn.disabled = false;
+    btn.textContent = "Retry";
+  }
+}
+</script>
+</body>
+</html>
