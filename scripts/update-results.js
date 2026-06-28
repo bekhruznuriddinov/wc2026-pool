@@ -136,13 +136,61 @@ async function main() {
     }
   }
 
-  const totalChanges = kickoffsUpdated + resultsUpdated;
-  if (totalChanges > 0) {
+  if (kickoffsUpdated + resultsUpdated > 0) {
     await batch.commit();
-    console.log(`\nDone — ${kickoffsUpdated} kickoff(s) synced, ${resultsUpdated} result(s) written. ${skipped} already had results.`);
+    console.log(`\nMatch updates: ${kickoffsUpdated} kickoff(s), ${resultsUpdated} result(s). ${skipped} already had results.`);
   } else {
-    console.log(`\nNo changes needed. ${skipped} match(es) already recorded.`);
+    console.log(`\nNo match changes. ${skipped} already recorded.`);
   }
+
+  // ── Auto-manage round status ──────────────────────────────────────────────
+  // Opens a round 72h before its first match; completes it when all results are in.
+  const OPEN_HOURS_BEFORE = 72;
+  const now = new Date();
+
+  const roundsSnap = await db.collection("rounds").get();
+
+  // Re-fetch matches so we see any results written above
+  const freshMatchesSnap = await db.collection("matches").get();
+  const matchesByRound = {};
+  freshMatchesSnap.docs.forEach((d) => {
+    const m = { id: d.id, ...d.data() };
+    if (!matchesByRound[m.roundId]) matchesByRound[m.roundId] = [];
+    matchesByRound[m.roundId].push(m);
+  });
+
+  for (const roundDoc of roundsSnap.docs) {
+    const round = roundDoc.data();
+    const roundId = roundDoc.id;
+
+    // Only consider matches with both real teams known
+    const realMatches = (matchesByRound[roundId] || []).filter(
+      (m) => m.team1 && m.team1 !== "TBD" && m.team2 && m.team2 !== "TBD"
+    );
+    if (realMatches.length === 0) continue;
+
+    if (round.status === "upcoming") {
+      const kickoffs = realMatches
+        .filter((m) => m.kickoff)
+        .map((m) => (m.kickoff.toDate ? m.kickoff.toDate() : new Date(m.kickoff)))
+        .sort((a, b) => a - b);
+
+      if (kickoffs.length > 0) {
+        const hoursUntil = (kickoffs[0] - now) / 36e5;
+        if (hoursUntil <= OPEN_HOURS_BEFORE) {
+          await roundDoc.ref.update({ status: "open" });
+          console.log(`[round] ${roundId} → open (first match in ${Math.round(hoursUntil)}h)`);
+        }
+      }
+    } else if (round.status === "open") {
+      if (realMatches.every((m) => m.result)) {
+        await roundDoc.ref.update({ status: "complete" });
+        console.log(`[round] ${roundId} → complete (all ${realMatches.length} match(es) done)`);
+      }
+    }
+  }
+
+  console.log("Round status check done.");
 }
 
 main().catch((err) => {
