@@ -143,7 +143,8 @@ function renderRound(round) {
         </div>
         <div style="margin-top:0.4rem;font-size:0.8rem;color:var(--text-muted)">
           Bonuses stack — nail the exact score and you earn all three.
-          &nbsp;<strong style="color:var(--red)">−1 pt</strong> if you enter a score prediction that's wrong.
+          If you predict a score and get it wrong, <strong style="color:var(--red)">−1 pt</strong> is deducted —
+          but only if you picked the correct winner, so you can never score negative on a single match.
         </div>
       </div>
     </details>` : "";
@@ -273,7 +274,7 @@ function matchCard(match, round) {
     if (!isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
       if (s1 === a1 && s2 === a2) { if (correctWinner) { earned += 6; bonusNote = " +5 exact +1 margin!"; } }
       else if ((s1 - s2) === (a1 - a2)) { if (correctWinner) { earned += 1; bonusNote = " +1 correct margin"; } }
-      else { earned -= 1; bonusNote = " −1 wrong score"; }
+      else if (correctWinner) { earned -= 1; bonusNote = " −1 wrong score"; }
     }
     const color = correctWinner ? "text-green" : "text-red";
     const icon = correctWinner ? "✓" : "✗";
@@ -558,7 +559,7 @@ function calcMatchPoints(roundId, match, pick) {
   if (!isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
     if (s1 === a1 && s2 === a2) { if (correctWin) pts += 6; } // +5 exact +1 margin
     else if ((s1 - s2) === (a1 - a2)) { if (correctWin) pts += 1; }
-    else pts -= 1;
+    else if (correctWin) pts -= 1; // penalty only neutralises a winner pick, never goes negative
   }
   return pts;
 }

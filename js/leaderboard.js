@@ -76,8 +76,8 @@ async function initLeaderboard() {
                 if (correctWin) { statExact++; statMargin++; pts += 6; } // +5 exact +1 margin
               } else if ((s1 - s2) === (a1 - a2)) {
                 if (correctWin) { statMargin++; pts += 1; }
-              } else {
-                pts -= 1;
+              } else if (correctWin) {
+                pts -= 1; // penalty only neutralises a winner pick, never goes negative
               }
             }
           }
