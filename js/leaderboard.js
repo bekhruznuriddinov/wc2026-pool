@@ -21,12 +21,19 @@ async function initLeaderboard() {
     const predictions = {};
     predsSnap.docs.forEach(d => { predictions[d.id] = d.data(); });
 
+    // Total decided matches across all active rounds
+    const totalDecided = Object.values(matches).filter(m => {
+      const round = rounds.find(r => r.id === m.roundId);
+      return round && round.status !== "upcoming" && m.result;
+    }).length;
+
     // Calculate scores for each user
     const ranked = users.map(u => {
       const userPreds = predictions[u.id] || {};
       const picks = userPreds.picks || {};
 
       let totalPoints = 0;
+      let totalCorrect = 0;
       const roundScores = {};
 
       rounds.forEach(round => {
@@ -38,6 +45,7 @@ async function initLeaderboard() {
           if (!match.result || !pick) return;
           const winner = typeof pick === "object" ? pick.winner : pick;
           if (winner !== match.result) return;
+          totalCorrect++;
           let pts = ROUND_POINTS[round.id];
           if (typeof pick === "object" && pick.score1 !== null && pick.score2 !== null) {
             const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);
@@ -53,7 +61,7 @@ async function initLeaderboard() {
         totalPoints += rScore;
       });
 
-      return { ...u, totalPoints, roundScores };
+      return { ...u, totalPoints, totalCorrect, roundScores };
     });
 
     // Sort by total points desc, then name
@@ -91,6 +99,7 @@ async function initLeaderboard() {
                   : ""}
                 <br><span style="color:var(--text-dim);font-size:0.65rem">${ROUND_POINTS[r.id]}pt ea</span>
               </th>`).join("")}
+            <th style="text-align:center">Correct</th>
             <th style="text-align:right">Total</th>
           </tr>
         </thead>
@@ -108,6 +117,7 @@ async function initLeaderboard() {
                   </div>
                 </td>
                 ${scoredRounds.map(r => `<td style="text-align:center"><span class="score-chip">${u.roundScores[r.id] || 0}</span></td>`).join("")}
+                <td style="text-align:center;font-size:0.85rem;color:var(--text-muted)">${u.totalCorrect}/${totalDecided}</td>
                 <td style="text-align:right"><span class="points-big">${u.totalPoints}</span></td>
               </tr>`;
           }).join("")}
