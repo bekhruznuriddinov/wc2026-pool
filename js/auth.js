@@ -32,10 +32,13 @@ function initials(name) {
 function renderUserBar(user) {
   const el = document.getElementById("userBar");
   if (!el || !user) return;
+  el.style.cssText = "display:flex;align-items:center;gap:0.75rem;";
   el.innerHTML = `
-    <div class="user-avatar">${initials(user.name)}</div>
-    <span>${user.name}</span>
-    <button class="btn btn-ghost btn-sm" onclick="logout()" style="margin-left:auto">Sign out</button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="user-avatar">${initials(user.name)}</div>
+      <span style="color:rgba(255,255,255,0.75);font-size:0.82rem;white-space:nowrap">${user.name}</span>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="logout()" style="color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.15);white-space:nowrap">Sign out</button>
   `;
 }
 
