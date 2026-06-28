@@ -352,13 +352,17 @@ function rerenderCard(matchId) {
 
 function updatePickCounter() {
   const now = new Date();
-  const pickable = allMatches.filter(m => {
-    if (!m.team1 || m.team1 === "TBD") return false;
+  const realMatches = allMatches.filter(m => m.team1 && m.team1 !== "TBD");
+  const freebies = realMatches.filter(m => m.freebie);
+  const pickable = realMatches.filter(m => {
+    if (m.freebie) return false;
     const ko = m.kickoff ? (m.kickoff.toDate ? m.kickoff.toDate() : new Date(m.kickoff)) : null;
     return !ko || now < ko;
   });
-  const picked = pickable.filter(m => myPicks[m.id]?.winner).length;
-  document.getElementById("pickCount").textContent = `${picked}/${pickable.length} picked`;
+  const manualPicked = pickable.filter(m => myPicks[m.id]?.winner).length;
+  const total = pickable.length + freebies.length;
+  const picked = manualPicked + freebies.length;
+  document.getElementById("pickCount").textContent = `${picked}/${total} picked`;
 }
 
 function autoSave() {
