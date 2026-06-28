@@ -2,14 +2,12 @@ const user = requireAuth();
 renderUserBar(user);
 
 let allMatches = [];
-let myPicks = {};
+let myPicks = {};     // { matchId: { winner: 'team1', score1: 2, score2: 1 } }
 let currentRoundId = null;
-let roundStatuses = {};
 
 async function init() {
   document.getElementById("loading").style.display = "flex";
   try {
-    // Load all rounds
     const roundsSnap = await db.collection("rounds").orderBy("order").get();
     const rounds = roundsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
@@ -19,20 +17,13 @@ async function init() {
       return;
     }
 
-    rounds.forEach(r => { roundStatuses[r.id] = r.status; });
-
-    // Build round tabs
     buildRoundTabs(rounds);
 
-    // Load user's picks
     const picksDoc = await db.collection("predictions").doc(user.userId).get();
     myPicks = picksDoc.exists ? (picksDoc.data().picks || {}) : {};
 
-    // Default to first open round, else first round
     const openRound = rounds.find(r => r.status === "open");
-    const firstRound = rounds[0];
-    currentRoundId = (openRound || firstRound).id;
-
+    currentRoundId = (openRound || rounds[0]).id;
     await loadRound(currentRoundId, rounds);
 
   } catch (err) {
@@ -43,8 +34,7 @@ async function init() {
 }
 
 function buildRoundTabs(rounds) {
-  const nav = document.getElementById("roundTabs");
-  nav.innerHTML = rounds.map(r => `
+  document.getElementById("roundTabs").innerHTML = rounds.map(r => `
     <button class="round-tab" data-round="${r.id}" onclick="switchRound('${r.id}')">
       ${r.name}
       <span class="badge badge-${r.status}" style="margin-left:6px;font-size:0.65rem">${r.status}</span>
@@ -55,12 +45,8 @@ function buildRoundTabs(rounds) {
 async function switchRound(roundId) {
   if (roundId === currentRoundId) return;
   currentRoundId = roundId;
-  document.querySelectorAll(".round-tab").forEach(t => {
-    t.classList.toggle("active", t.dataset.round === roundId);
-  });
   document.getElementById("loading").style.display = "flex";
   document.getElementById("roundContent").style.display = "none";
-
   const roundsSnap = await db.collection("rounds").orderBy("order").get();
   const rounds = roundsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
   await loadRound(roundId, rounds);
@@ -68,109 +54,78 @@ async function switchRound(roundId) {
 
 async function loadRound(roundId, rounds) {
   const round = rounds.find(r => r.id === roundId);
+  document.querySelectorAll(".round-tab").forEach(t =>
+    t.classList.toggle("active", t.dataset.round === roundId));
 
-  // Activate tab
-  document.querySelectorAll(".round-tab").forEach(t => {
-    t.classList.toggle("active", t.dataset.round === roundId);
-  });
-
-  // Load matches for this round
   const matchSnap = await db.collection("matches")
     .where("roundId", "==", roundId)
     .orderBy("matchNum")
     .get();
-
   allMatches = matchSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
   document.getElementById("loading").style.display = "none";
   document.getElementById("roundContent").style.display = "block";
-
-  renderRound(round, rounds);
+  renderRound(round);
 }
 
-function renderRound(round, rounds) {
+function renderRound(round) {
   const isOpen = round.status === "open";
   const isComplete = round.status === "complete";
+  const pts = ROUND_POINTS[round.id];
 
-  // Round header
   let deadlineStr = "";
   if (round.deadline) {
     const d = round.deadline.toDate ? round.deadline.toDate() : new Date(round.deadline);
-    deadlineStr = `Deadline: ${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}`;
+    deadlineStr = `Deadline: ${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})} &nbsp;·&nbsp; `;
   }
 
   document.getElementById("roundHeader").innerHTML = `
     <div class="round-info">
       <h2>${round.name}</h2>
-      <p>${deadlineStr || ""} &nbsp; ${ROUND_POINTS[round.id]} pt${ROUND_POINTS[round.id] > 1 ? "s" : ""} per correct pick</p>
+      <p>${deadlineStr}${pts} pt${pts > 1 ? "s" : ""} per correct winner · +5 exact score · +1 correct margin</p>
     </div>
     <span class="badge badge-${round.status}">${round.status}</span>
   `;
 
-  // Status alert
   let alertHtml = "";
   if (!isOpen && !isComplete) {
     alertHtml = `<div class="alert alert-warning">This round isn't open yet. Check back soon.</div>`;
   } else if (isComplete) {
     const earned = calcRoundScore(round.id);
-    const total = allMatches.length * ROUND_POINTS[round.id];
-    alertHtml = `<div class="alert alert-info">Round complete — you scored <strong>${earned}/${total} pts</strong> in this round.</div>`;
+    alertHtml = `<div class="alert alert-info">Round complete — you scored <strong>${earned} pts</strong> in this round.</div>`;
   } else if (isOpen) {
-    const pickedCount = allMatches.filter(m => myPicks[m.id]).length;
-    const remaining = allMatches.length - pickedCount;
-    if (remaining > 0) {
-      alertHtml = `<div class="alert alert-warning">You have <strong>${remaining} unpicked match${remaining > 1 ? "es" : ""}</strong> — submit before the deadline.</div>`;
+    const picked = allMatches.filter(m => myPicks[m.id]?.winner).length;
+    const rem = allMatches.filter(m => !myPicks[m.id]?.winner && m.team1 !== "TBD").length;
+    if (rem > 0) {
+      alertHtml = `<div class="alert alert-warning"><strong>${rem} match${rem > 1 ? "es" : ""} unpicked</strong> — save before the deadline. Score predictions are optional but earn bonus points.</div>`;
     } else {
-      alertHtml = `<div class="alert alert-success">All matches picked! Submit your predictions.</div>`;
+      alertHtml = `<div class="alert alert-success">All matches picked! Don't forget to save.</div>`;
     }
   }
   document.getElementById("roundAlert").innerHTML = alertHtml;
 
-  // Matches
   document.getElementById("matchesList").innerHTML = allMatches.length
-    ? allMatches.map(m => matchCard(m, round, isOpen)).join("")
-    : `<div class="empty-state"><div class="icon">⏳</div><h3>No matches yet</h3><p>The admin hasn't added matches for this round yet.</p></div>`;
+    ? allMatches.map(m => matchCard(m, round)).join("")
+    : `<div class="empty-state"><div class="icon">⏳</div><h3>No matches yet</h3><p>The admin hasn't added matches for this round.</p></div>`;
 
-  // Submit bar
   const submitBar = document.getElementById("submitBar");
   if (isOpen && allMatches.length > 0) {
-    const count = allMatches.filter(m => myPicks[m.id]).length;
     submitBar.style.display = "flex";
-    document.getElementById("pickCount").textContent = `${count}/${allMatches.length} picked`;
-    document.getElementById("submitBtn").disabled = count === 0;
+    updatePickCounter();
   } else {
     submitBar.style.display = "none";
   }
 }
 
-function matchCard(match, round, isOpen) {
-  const myPick = myPicks[match.id];
+function matchCard(match, round) {
+  const p = myPicks[match.id] || {};
   const result = match.result;
-  const isLocked = round.status !== "open";
+  const isOpen = round.status === "open";
+  const isLocked = !isOpen;
   const tbd1 = !match.team1 || match.team1 === "TBD";
   const tbd2 = !match.team2 || match.team2 === "TBD";
-  const bothTBD = tbd1 && tbd2;
 
-  function teamClass(side) {
-    if (isLocked && result) {
-      if (myPick === side) return result === side ? "correct" : "wrong";
-    }
-    if (myPick === side) return "selected";
-    return "";
-  }
-
-  function resultLabel() {
-    if (!result) return "";
-    const winner = result === "team1" ? match.team1 : match.team2;
-    const icon = myPick && myPick === result ? "✓" : myPick ? "✗" : "–";
-    const color = myPick && myPick === result ? "text-green" : myPick ? "text-red" : "text-muted";
-    return `<span class="${color}">${icon} ${winner} won &nbsp;·&nbsp; ${ROUND_POINTS[round.id]} pt${myPick === result ? "s earned" : "s missed"}</span>`;
-  }
-
-  const clickable = isOpen && !isLocked && !tbd1 && !tbd2;
-
-  // If both teams TBD, show the bracket label instead of match buttons
-  if (bothTBD) {
+  if (tbd1 && tbd2) {
     return `
     <div class="match-card" id="match-${match.id}" style="opacity:0.6">
       <div class="match-number">Match ${match.matchNum} &nbsp;·&nbsp; ${match.date || ""}</div>
@@ -180,89 +135,179 @@ function matchCard(match, round, isOpen) {
     </div>`;
   }
 
+  const clickable = isOpen && !tbd1 && !tbd2;
+
+  function teamClass(side) {
+    if (result) {
+      if (p.winner === side) return result === side ? "correct" : "wrong";
+      if (!p.winner && result === side) return "correct";
+    }
+    return p.winner === side ? "selected" : "";
+  }
+
+  // Bonus points earned display
+  function bonusLabel() {
+    if (!result || !p.winner) return "";
+    const pts = ROUND_POINTS[round.id];
+    const a1 = parseInt(match.score1), a2 = parseInt(match.score2);
+    const s1 = parseInt(p.score1), s2 = parseInt(p.score2);
+    const correctWinner = p.winner === result;
+    let earned = correctWinner ? pts : 0;
+    let bonusNote = "";
+    if (correctWinner && !isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
+      if (s1 === a1 && s2 === a2) { earned += 5; bonusNote = " +5 exact score!"; }
+      else if ((s1 - s2) === (a1 - a2)) { earned += 1; bonusNote = " +1 correct margin"; }
+    }
+    const color = correctWinner ? "text-green" : "text-red";
+    const icon = correctWinner ? "✓" : "✗";
+    const scoreStr = (!isNaN(a1) && !isNaN(a2)) ? ` (${a1}–${a2})` : "";
+    return `<span class="${color}">${icon} ${earned} pt${earned !== 1 ? "s" : ""}${scoreStr}${bonusNote}</span>`;
+  }
+
+  // Show predicted score in locked/complete state
+  function predictedScoreLabel() {
+    if (!isLocked || (!p.score1 && p.score1 !== 0)) return "";
+    return `<span class="text-muted text-small">Your score: ${p.score1}–${p.score2}</span>`;
+  }
+
+  const s1val = (p.score1 !== undefined && p.score1 !== null) ? p.score1 : "";
+  const s2val = (p.score2 !== undefined && p.score2 !== null) ? p.score2 : "";
+
   return `
   <div class="match-card" id="match-${match.id}">
     <div class="match-number">Match ${match.matchNum}${match.date ? " &nbsp;·&nbsp; " + match.date : ""}</div>
     <div class="match-teams">
       <button class="team-btn ${teamClass("team1")} ${isLocked ? "locked" : ""}"
-        ${clickable ? `onclick="pick('${match.id}', 'team1')"` : "disabled"}
+        ${clickable ? `onclick="pick('${match.id}','team1')"` : "disabled"}
         style="${!clickable ? "cursor:default" : ""}">
-        <span class="team-name">${match.team1 || "TBD"}</span>
+        <span class="team-name">${match.team1}</span>
       </button>
-      <div class="vs">VS</div>
+
+      <div class="score-center">
+        ${clickable ? `
+          <input class="score-input" type="number" min="0" max="20" placeholder="0"
+            value="${s1val}"
+            oninput="updateScore('${match.id}','score1',this.value)"
+            onclick="event.stopPropagation()">
+          <span class="score-dash">–</span>
+          <input class="score-input" type="number" min="0" max="20" placeholder="0"
+            value="${s2val}"
+            oninput="updateScore('${match.id}','score2',this.value)"
+            onclick="event.stopPropagation()">
+        ` : `
+          <span class="score-static">${
+            (match.score1 !== undefined && match.score2 !== undefined)
+              ? `${match.score1}–${match.score2}`
+              : "VS"
+          }</span>
+        `}
+      </div>
+
       <button class="team-btn ${teamClass("team2")} ${isLocked ? "locked" : ""}"
-        ${clickable ? `onclick="pick('${match.id}', 'team2')"` : "disabled"}
+        ${clickable ? `onclick="pick('${match.id}','team2')"` : "disabled"}
         style="${!clickable ? "cursor:default" : ""}">
-        <span class="team-name">${match.team2 || "TBD"}</span>
+        <span class="team-name">${match.team2}</span>
       </button>
     </div>
-    ${result || myPick ? `<div class="match-result">${resultLabel()}${!result && myPick ? `<span class="text-muted text-small">Your pick: ${myPick === "team1" ? match.team1 : match.team2}</span>` : ""}</div>` : ""}
+    ${(result || p.winner) ? `
+      <div class="match-result">
+        ${bonusLabel()}
+        ${predictedScoreLabel()}
+      </div>` : ""}
+    ${clickable && !result ? `<div class="score-hint">Optional: predict the score for +5 (exact) or +1 (right margin)</div>` : ""}
   </div>`;
 }
 
 function pick(matchId, side) {
-  // Toggle off if same pick
-  if (myPicks[matchId] === side) {
-    delete myPicks[matchId];
+  const p = myPicks[matchId] || {};
+  if (p.winner === side) {
+    // toggle off winner but keep scores
+    myPicks[matchId] = { ...p, winner: null };
+    if (!myPicks[matchId].winner) delete myPicks[matchId].winner;
   } else {
-    myPicks[matchId] = side;
+    myPicks[matchId] = { ...p, winner: side };
   }
+  rerenderCard(matchId);
+  updatePickCounter();
+}
 
+function updateScore(matchId, field, val) {
+  const p = myPicks[matchId] || {};
+  const num = val === "" ? null : parseInt(val);
+  myPicks[matchId] = { ...p, [field]: num };
+
+  // Auto-select winner if both scores filled and unequal
+  const updated = myPicks[matchId];
+  const s1 = updated.score1, s2 = updated.score2;
+  if (s1 !== null && s2 !== null && !isNaN(s1) && !isNaN(s2) && s1 !== s2) {
+    myPicks[matchId].winner = s1 > s2 ? "team1" : "team2";
+    rerenderCard(matchId);
+    updatePickCounter();
+  } else {
+    // Just update the card classes without re-rendering inputs (preserves focus)
+    const match = allMatches.find(m => m.id === matchId);
+    const card = document.getElementById(`match-${matchId}`);
+    if (card && match) {
+      card.querySelector(".team-btn:first-child")?.classList.toggle("selected", myPicks[matchId]?.winner === "team1");
+      card.querySelector(".team-btn:last-child")?.classList.toggle("selected", myPicks[matchId]?.winner === "team2");
+    }
+  }
+}
+
+function rerenderCard(matchId) {
   const match = allMatches.find(m => m.id === matchId);
-  const roundTab = document.querySelector(`.round-tab[data-round="${currentRoundId}"]`);
   const round = { id: currentRoundId, status: "open" };
-
-  // Re-render just this card
   const card = document.getElementById(`match-${matchId}`);
-  if (card) card.outerHTML = matchCard(match, round, true);
+  if (card && match) card.outerHTML = matchCard(match, round);
+}
 
-  // Update pick counter
-  const count = allMatches.filter(m => myPicks[m.id]).length;
-  document.getElementById("pickCount").textContent = `${count}/${allMatches.length} picked`;
-  document.getElementById("submitBtn").disabled = count === 0;
+function updatePickCounter() {
+  const picked = allMatches.filter(m => myPicks[m.id]?.winner).length;
+  const total = allMatches.filter(m => m.team1 !== "TBD").length;
+  document.getElementById("pickCount").textContent = `${picked}/${total} picked`;
+  document.getElementById("submitBtn").disabled = picked === 0;
 }
 
 async function submitPicks() {
   const btn = document.getElementById("submitBtn");
   btn.disabled = true;
   btn.textContent = "Saving…";
-
   try {
-    // Verify round still open
     const roundDoc = await db.collection("rounds").doc(currentRoundId).get();
     if (!roundDoc.exists || roundDoc.data().status !== "open") {
-      showToast("This round is no longer open for predictions.", "error");
-      btn.disabled = false;
-      btn.textContent = "Submit predictions";
-      return;
+      showToast("This round is no longer open.", "error");
+      btn.disabled = false; btn.textContent = "Save predictions"; return;
     }
-
     await db.collection("predictions").doc(user.userId).set({
       picks: myPicks,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
-
     showToast("Predictions saved!", "success");
-    btn.textContent = "Submit predictions";
-    btn.disabled = false;
-
-    // Update pick count alert
-    const roundAlert = document.getElementById("roundAlert");
-    roundAlert.innerHTML = `<div class="alert alert-success">Predictions saved — good luck!</div>`;
-
+    document.getElementById("roundAlert").innerHTML =
+      `<div class="alert alert-success">Predictions saved — good luck!</div>`;
   } catch (err) {
     console.error(err);
     showToast("Failed to save. Try again.", "error");
-    btn.disabled = false;
-    btn.textContent = "Submit predictions";
   }
+  btn.disabled = false;
+  btn.textContent = "Save predictions";
 }
 
 function calcRoundScore(roundId) {
-  return allMatches.reduce((sum, m) => {
-    if (m.result && myPicks[m.id] === m.result) return sum + ROUND_POINTS[roundId];
-    return sum;
-  }, 0);
+  return allMatches.reduce((sum, m) => sum + calcMatchPoints(roundId, m, myPicks[m.id]), 0);
+}
+
+function calcMatchPoints(roundId, match, pick) {
+  if (!match.result || !pick?.winner) return 0;
+  if (pick.winner !== match.result) return 0;
+  let pts = ROUND_POINTS[roundId];
+  const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);
+  const a1 = parseInt(match.score1), a2 = parseInt(match.score2);
+  if (!isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
+    if (s1 === a1 && s2 === a2) pts += 5;
+    else if ((s1 - s2) === (a1 - a2)) pts += 1;
+  }
+  return pts;
 }
 
 function showToast(msg, type = "info") {

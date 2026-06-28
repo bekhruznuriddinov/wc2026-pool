@@ -34,9 +34,21 @@ async function initLeaderboard() {
         let rScore = 0;
         Object.entries(matches).forEach(([matchId, match]) => {
           if (match.roundId !== round.id) return;
-          if (match.result && picks[matchId] === match.result) {
-            rScore += ROUND_POINTS[round.id];
+          const pick = picks[matchId];
+          if (!match.result || !pick) return;
+          // Support both old string format and new object format
+          const winner = typeof pick === "object" ? pick.winner : pick;
+          if (winner !== match.result) return;
+          let pts = ROUND_POINTS[round.id];
+          if (typeof pick === "object" && pick.score1 !== null && pick.score2 !== null) {
+            const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);
+            const a1 = parseInt(match.score1), a2 = parseInt(match.score2);
+            if (!isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
+              if (s1 === a1 && s2 === a2) pts += 5;
+              else if ((s1 - s2) === (a1 - a2)) pts += 1;
+            }
           }
+          rScore += pts;
         });
         roundScores[round.id] = rScore;
         totalPoints += rScore;

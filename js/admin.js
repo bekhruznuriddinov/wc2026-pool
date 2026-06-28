@@ -125,11 +125,22 @@ function renderMatchesAdmin(matches) {
                 onchange="updateMatchField('${m.id}','team2',this.value)">
             </td>
             <td>
-              <select onchange="setResult('${m.id}',this.value)" style="width:120px;padding:0.4rem 0.6rem;font-size:0.85rem">
-                <option value="" ${!m.result ? "selected" : ""}>Pending</option>
-                <option value="team1" ${m.result==="team1"?"selected":""}>${m.team1 || "Team 1"}</option>
-                <option value="team2" ${m.result==="team2"?"selected":""}>${m.team2 || "Team 2"}</option>
-              </select>
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                <input type="number" min="0" max="20" placeholder="0"
+                  value="${m.score1 ?? ""}"
+                  style="width:48px;padding:0.4rem 0.5rem;font-size:0.85rem;text-align:center"
+                  onchange="updateMatchField('${m.id}','score1',this.value)">
+                <span style="color:var(--text-muted)">–</span>
+                <input type="number" min="0" max="20" placeholder="0"
+                  value="${m.score2 ?? ""}"
+                  style="width:48px;padding:0.4rem 0.5rem;font-size:0.85rem;text-align:center"
+                  onchange="updateMatchField('${m.id}','score2',this.value)">
+                <select onchange="setResult('${m.id}',this.value)" style="width:110px;padding:0.4rem 0.5rem;font-size:0.85rem">
+                  <option value="" ${!m.result ? "selected" : ""}>Winner…</option>
+                  <option value="team1" ${m.result==="team1"?"selected":""}>${m.team1 || "Team 1"}</option>
+                  <option value="team2" ${m.result==="team2"?"selected":""}>${m.team2 || "Team 2"}</option>
+                </select>
+              </div>
             </td>
             <td>
               <button class="btn btn-danger btn-sm" onclick="deleteMatch('${m.id}')">Delete</button>
@@ -145,11 +156,17 @@ async function updateMatchField(matchId, field, value) {
 }
 
 async function setResult(matchId, result) {
+  const row = document.getElementById(`mrow-${matchId}`);
+  const inputs = row ? row.querySelectorAll("input[type=number]") : [];
+  const score1 = inputs[0] ? parseInt(inputs[0].value) : null;
+  const score2 = inputs[1] ? parseInt(inputs[1].value) : null;
   await db.collection("matches").doc(matchId).update({
     result: result || null,
+    score1: isNaN(score1) ? null : score1,
+    score2: isNaN(score2) ? null : score2,
     status: result ? "complete" : "pending"
   });
-  showAdminAlert("Result saved. Click 'Recalc scores' on the round when all matches are done.", "info");
+  showAdminAlert("Result saved. Recalculate scores when all matches in the round are done.", "info");
 }
 
 async function deleteMatch(matchId) {

@@ -345,6 +345,50 @@ select option { background: #fff; color: var(--text); }
   text-align: center;
 }
 
+/* Score prediction inputs */
+.score-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.score-input {
+  width: 42px !important;
+  padding: 0.45rem 0.3rem !important;
+  text-align: center;
+  font-size: 1rem !important;
+  font-weight: 600;
+  border-radius: 6px !important;
+  -moz-appearance: textfield;
+}
+.score-input::-webkit-outer-spin-button,
+.score-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+.score-dash {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.score-static {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  min-width: 44px;
+  text-align: center;
+}
+
+.score-hint {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-align: center;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
 .match-result {
   margin-top: 0.65rem;
   padding-top: 0.65rem;
