@@ -157,8 +157,8 @@ function pickerLabel(names) {
   if (!names || names.length === 0) return "";
   const MAX = 4;
   const firsts = names.map(n => n.split(" ")[0]);
-  if (firsts.length <= MAX) return firsts.join(", ");
-  return firsts.slice(0, MAX).join(", ") + "…";
+  const list = firsts.length <= MAX ? firsts.join(", ") : firsts.slice(0, MAX).join(", ") + "…";
+  return `Also picked by ${list}`;
 }
 
 function matchCard(match, round) {
