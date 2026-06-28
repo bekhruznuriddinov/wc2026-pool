@@ -33,26 +33,36 @@ async function initLeaderboard() {
       const picks = userPreds.picks || {};
 
       let totalPoints = 0;
-      let totalCorrect = 0;
+      let statPicked = 0;    // picks made for decided matches
+      let statCorrect = 0;   // correct winner
+      let statMargin = 0;    // correct winner + correct goal difference
+      let statExact = 0;     // correct winner + exact scoreline
       const roundScores = {};
 
       rounds.forEach(round => {
         if (round.status === "upcoming") return;
         let rScore = 0;
         Object.entries(matches).forEach(([matchId, match]) => {
-          if (match.roundId !== round.id) return;
+          if (match.roundId !== round.id || !match.result) return;
           const pick = picks[matchId];
-          if (!match.result || !pick) return;
+          if (!pick) return;
+
+          statPicked++;
           const winner = typeof pick === "object" ? pick.winner : pick;
-          if (winner !== match.result) return;
-          totalCorrect++;
-          let pts = ROUND_POINTS[round.id];
+          const correctWin = winner === match.result;
+          if (correctWin) statCorrect++;
+
+          let pts = correctWin ? ROUND_POINTS[round.id] : 0;
+
           if (typeof pick === "object" && pick.score1 !== null && pick.score2 !== null) {
             const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);
             const a1 = parseInt(match.score1), a2 = parseInt(match.score2);
             if (!isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
-              if (s1 === a1 && s2 === a2) pts += 5;
-              else if ((s1 - s2) === (a1 - a2)) pts += 1;
+              if (s1 === a1 && s2 === a2) {
+                if (correctWin) { statExact++; statMargin++; pts += 5; }
+              } else if ((s1 - s2) === (a1 - a2)) {
+                if (correctWin) { statMargin++; pts += 1; }
+              }
             }
           }
           rScore += pts;
@@ -61,7 +71,7 @@ async function initLeaderboard() {
         totalPoints += rScore;
       });
 
-      return { ...u, totalPoints, totalCorrect, roundScores };
+      return { ...u, totalPoints, statPicked, statCorrect, statMargin, statExact, roundScores };
     });
 
     // Sort by total points desc, then name
@@ -99,7 +109,10 @@ async function initLeaderboard() {
                   : ""}
                 <br><span style="color:var(--text-dim);font-size:0.65rem">${ROUND_POINTS[r.id]}pt ea</span>
               </th>`).join("")}
-            <th style="text-align:center">Correct</th>
+            <th style="text-align:center">Picked<br><span style="color:var(--text-dim);font-size:0.65rem">submitted</span></th>
+            <th style="text-align:center">Winners<br><span style="color:var(--text-dim);font-size:0.65rem">correct</span></th>
+            <th style="text-align:center">Margin<br><span style="color:var(--text-dim);font-size:0.65rem">+1 bonus</span></th>
+            <th style="text-align:center">Exact<br><span style="color:var(--text-dim);font-size:0.65rem">+5 bonus</span></th>
             <th style="text-align:right">Total</th>
           </tr>
         </thead>
@@ -117,7 +130,10 @@ async function initLeaderboard() {
                   </div>
                 </td>
                 ${scoredRounds.map(r => `<td style="text-align:center"><span class="score-chip">${u.roundScores[r.id] || 0}</span></td>`).join("")}
-                <td style="text-align:center;font-size:0.85rem;color:var(--text-muted)">${u.totalCorrect}/${totalDecided}</td>
+                <td style="text-align:center" class="stat-cell">${u.statPicked}/${totalDecided}</td>
+                <td style="text-align:center" class="stat-cell">${u.statCorrect}/${totalDecided}</td>
+                <td style="text-align:center" class="stat-cell">${u.statMargin}/${totalDecided}</td>
+                <td style="text-align:center" class="stat-cell">${u.statExact}/${totalDecided}</td>
                 <td style="text-align:right"><span class="points-big">${u.totalPoints}</span></td>
               </tr>`;
           }).join("")}

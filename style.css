@@ -458,6 +458,8 @@ select option { background: #fff; color: var(--text); }
 .rank-2 { background: #F2F4F7; color: #5A6B80; border-color: var(--border); }
 .rank-3 { background: #FDF0E8; color: #9A5A1A; border-color: #F5C89A; }
 
+.stat-cell { font-size: 0.8rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
 .score-chip {
   display: inline-block;
   font-size: 0.8rem;
