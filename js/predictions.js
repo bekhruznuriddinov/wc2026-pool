@@ -2,9 +2,12 @@ const user = requireAuth();
 renderUserBar(user);
 
 let allMatches = [];
-let myPicks = {};     // { matchId: { winner: 'team1', score1: 2, score2: 1 } }
-let peerPicks = {};   // { matchId: { team1: ['Alice', 'Bob'], team2: ['Carol'] } }
+let myPicks = {};          // { matchId: { winner: 'team1', score1: 2, score2: 1 } }
+let peerPicks = {};        // { matchId: { team1: ['Alice', 'Bob'], team2: ['Carol'] } }
+let allPlayerPicks = {};   // { matchId: { team1: [{name, isSelf}], team2: [...] } }
 let currentRoundId = null;
+let currentRoundData = null;
+let showGroupView = false;
 let saveTimer = null;
 
 async function init() {
@@ -66,6 +69,7 @@ async function loadRound(roundId, rounds) {
   const matchSnap = await db.collection("matches")
     .where("roundId", "==", roundId)
     .get();
+  currentRoundData = round;
   allMatches = matchSnap.docs.map(d => ({ id: d.id, ...d.data() }))
     .sort((a, b) => {
       const koA = a.kickoff ? (a.kickoff.toDate ? a.kickoff.toDate() : new Date(a.kickoff)) : null;
@@ -122,9 +126,18 @@ function renderRound(round) {
   }
   document.getElementById("roundAlert").innerHTML = alertHtml;
 
-  document.getElementById("matchesList").innerHTML = allMatches.length
-    ? allMatches.map(m => matchCard(m, round)).join("")
-    : `<div class="empty-state"><div class="icon">⏳</div><h3>No matches yet</h3><p>The admin hasn't added matches for this round.</p></div>`;
+  // View toggle
+  const toggleEl = document.getElementById("viewToggle");
+  toggleEl.style.display = "flex";
+  toggleEl.style.justifyContent = "flex-end";
+  toggleEl.style.margin = "0.75rem 0 0.25rem";
+  toggleEl.innerHTML = `
+    <div class="view-toggle-seg">
+      <button onclick="setView(false)" class="${!showGroupView ? 'active' : ''}">My Picks</button>
+      <button onclick="setView(true)" class="${showGroupView ? 'active' : ''}">All Picks</button>
+    </div>`;
+
+  renderMatchesList(round);
 
   const submitBar = document.getElementById("submitBar");
   if (isOpen && allMatches.length > 0) {
@@ -145,15 +158,21 @@ async function loadPeerPicks() {
     usersSnap.docs.forEach(d => { names[d.id] = d.data().name; });
 
     peerPicks = {};
+    allPlayerPicks = {};
+
     predsSnap.docs.forEach(doc => {
-      if (doc.id === user.userId) return; // skip self
-      const name = names[doc.id];
+      const isSelf = doc.id === user.userId;
+      const name = isSelf ? user.name : names[doc.id];
       if (!name) return;
       Object.entries(doc.data().picks || {}).forEach(([matchId, pick]) => {
         const winner = (pick && typeof pick === "object") ? pick.winner : pick;
         if (winner !== "team1" && winner !== "team2") return;
-        if (!peerPicks[matchId]) peerPicks[matchId] = { team1: [], team2: [] };
-        peerPicks[matchId][winner].push(name);
+        if (!allPlayerPicks[matchId]) allPlayerPicks[matchId] = { team1: [], team2: [] };
+        allPlayerPicks[matchId][winner].push({ name, isSelf });
+        if (!isSelf) {
+          if (!peerPicks[matchId]) peerPicks[matchId] = { team1: [], team2: [] };
+          peerPicks[matchId][winner].push(name);
+        }
       });
     });
   } catch (e) {
@@ -303,6 +322,89 @@ function matchCard(match, round) {
         ${predictedScoreLabel()}
       </div>` : ""}
     ${clickable && !result ? `<div class="score-hint">Optional score bet: +5 exact · +1 right margin · −1 if wrong</div>` : ""}
+  </div>`;
+}
+
+function renderMatchesList(round) {
+  const r = round || currentRoundData;
+  if (!r) return;
+  document.getElementById("matchesList").innerHTML = allMatches.length
+    ? allMatches.map(m => showGroupView ? groupMatchCard(m, r) : matchCard(m, r)).join("")
+    : `<div class="empty-state"><div class="icon">⏳</div><h3>No matches yet</h3><p>The admin hasn't added matches for this round.</p></div>`;
+}
+
+function setView(isGroup) {
+  showGroupView = isGroup;
+  document.querySelectorAll(".view-toggle-seg button").forEach((btn, i) => {
+    btn.classList.toggle("active", isGroup ? i === 1 : i === 0);
+  });
+  renderMatchesList();
+}
+
+function groupMatchCard(match, round) {
+  const tbd1 = !match.team1 || match.team1 === "TBD";
+  const tbd2 = !match.team2 || match.team2 === "TBD";
+  if (tbd1 && tbd2) {
+    return `<div class="match-card" id="match-${match.id}" style="opacity:0.5">
+      <div class="match-number">Match ${match.matchNum}${match.date ? " · " + match.date : ""}</div>
+      <div style="text-align:center;color:var(--text-muted);padding:0.5rem 0 0.25rem;font-size:0.85rem">${match.bracketLabel || "TBD vs TBD"}</div>
+    </div>`;
+  }
+
+  const result = match.result;
+  const kickoffVal = match.kickoff;
+  const kickoff = kickoffVal ? (kickoffVal.toDate ? kickoffVal.toDate() : new Date(kickoffVal)) : null;
+
+  const kickoffBadge = kickoff && !result
+    ? `<span style="margin-left:6px;font-size:0.65rem;color:var(--text-muted)">${kickoff.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</span>`
+    : "";
+  const freebieBadge = match.freebie
+    ? `<span style="margin-left:6px;font-size:0.65rem;background:rgba(34,197,94,0.15);color:#22c55e;padding:1px 6px;border-radius:4px;font-weight:600">FREE PICK</span>`
+    : "";
+
+  function pickerList(side) {
+    if (match.freebie) {
+      return `<div class="gpick-name" style="font-style:italic;color:var(--text-muted)">everyone ✓</div>`;
+    }
+    const pickers = allPlayerPicks[match.id]?.[side] || [];
+    if (!pickers.length) return `<div class="gpick-name" style="color:var(--text-dim);font-style:italic">no picks yet</div>`;
+    const won = result === side;
+    const lost = result && result !== side;
+    return pickers.map(p => `
+      <div class="gpick-name ${p.isSelf ? 'gpick-self' : ''} ${won ? 'gpick-correct' : lost ? 'gpick-wrong' : ''}">
+        ${p.name}${p.isSelf ? ' (you)' : ''}
+      </div>`).join("");
+  }
+
+  const t1won = result === "team1";
+  const t2won = result === "team2";
+  const scoreStr = (result && match.score1 !== undefined && match.score1 !== null)
+    ? `<div style="text-align:center;font-size:0.78rem;color:var(--text-muted);margin-top:0.6rem">Final: ${match.score1}–${match.score2}</div>`
+    : "";
+
+  return `
+  <div class="match-card" id="match-${match.id}">
+    <div class="match-number">Match ${match.matchNum}${match.date ? " · " + match.date : ""}${kickoffBadge}${freebieBadge}</div>
+    <div class="group-picks-row">
+      <div class="group-picks-col ${t1won ? 'gpick-winner' : ''}">
+        <div class="group-picks-team-header">
+          ${flag(match.team1)}
+          <span>${match.team1}</span>
+          ${t1won ? '<span class="gpick-win-badge">W</span>' : ''}
+        </div>
+        <div class="group-picks-list">${pickerList('team1')}</div>
+      </div>
+      <div class="group-picks-divider">vs</div>
+      <div class="group-picks-col ${t2won ? 'gpick-winner' : ''}">
+        <div class="group-picks-team-header">
+          ${flag(match.team2)}
+          <span>${match.team2}</span>
+          ${t2won ? '<span class="gpick-win-badge">W</span>' : ''}
+        </div>
+        <div class="group-picks-list">${pickerList('team2')}</div>
+      </div>
+    </div>
+    ${scoreStr}
   </div>`;
 }
 

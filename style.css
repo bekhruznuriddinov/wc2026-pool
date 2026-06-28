@@ -633,3 +633,90 @@ details summary:hover { color: var(--text); }
   /* Page header */
   .page-header h1 { font-size: 1.25rem; }
 }
+
+/* ── View toggle (My Picks / All Picks) ─────────────────── */
+.view-toggle-seg {
+  display: inline-flex;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.view-toggle-seg button {
+  padding: 0.35rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+.view-toggle-seg button.active {
+  background: var(--navy);
+  color: #fff;
+}
+.view-toggle-seg button:hover:not(.active) {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ── Group picks card ───────────────────────────────────── */
+.group-picks-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  margin-top: 0.75rem;
+}
+.group-picks-col {
+  flex: 1;
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+.group-picks-col.gpick-winner {
+  background: rgba(34,197,94,0.08);
+  border-color: rgba(34,197,94,0.3);
+}
+.group-picks-team-header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+  font-size: 0.82rem;
+  margin-bottom: 0.45rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.gpick-win-badge {
+  margin-left: auto;
+  font-size: 0.6rem;
+  background: #22c55e;
+  color: #fff;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+.group-picks-divider {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 0.55rem;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  flex-shrink: 0;
+}
+.group-picks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.gpick-name {
+  font-size: 0.8rem;
+  color: var(--text);
+  line-height: 1.4;
+}
+.gpick-self { font-weight: 700; color: var(--navy-3); }
+.gpick-correct { color: #22c55e; }
+.gpick-wrong { color: var(--text-dim); text-decoration: line-through; }
