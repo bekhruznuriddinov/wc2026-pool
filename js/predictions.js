@@ -99,7 +99,7 @@ function renderRound(round) {
   document.getElementById("roundHeader").innerHTML = `
     <div class="round-info">
       <h2>${round.name}</h2>
-      <p>${deadlineStr}${pts} pt${pts > 1 ? "s" : ""} per correct winner · <strong style="color:var(--green)">+6 exact score</strong> · <strong style="color:var(--green)">+1 correct margin</strong> · <strong style="color:var(--red)">−1 if score is wrong</strong></p>
+      <p>${deadlineStr}${pts} pt${pts > 1 ? "s" : ""} per correct winner</p>
     </div>
     <span class="badge badge-${round.status}">${round.status}</span>
   `;
@@ -119,12 +119,34 @@ function renderRound(round) {
     });
     const rem = pickable.filter(m => !myPicks[m.id]?.winner).length;
     if (rem > 0) {
-      alertHtml = `<div class="alert alert-warning"><strong>${rem} match${rem > 1 ? "es" : ""} unpicked</strong> — picks lock at kickoff. Score predictions are optional: <strong style="color:var(--green)">+6 exact score</strong>, <strong style="color:var(--green)">+1 right margin</strong>, <strong style="color:var(--red)">−1 if wrong</strong>.</div>`;
+      alertHtml = `<div class="alert alert-warning"><strong>${rem} match${rem > 1 ? "es" : ""} unpicked</strong> — picks lock at kickoff.</div>`;
     } else {
       alertHtml = `<div class="alert alert-success">All open matches picked!</div>`;
     }
   }
   document.getElementById("roundAlert").innerHTML = alertHtml;
+
+  // Scoring banner
+  const maxMatchPts = pts + 6;
+  document.getElementById("scoringBanner").innerHTML = (isOpen || isComplete) ? `
+    <details class="scoring-banner">
+      <summary>How scoring works</summary>
+      <div class="scoring-banner-body">
+        <div class="scoring-chain">
+          <span><strong style="color:var(--green)">+1</strong> correct winner</span>
+          <span class="chain-arrow">→</span>
+          <span><strong style="color:var(--green)">+1</strong> right margin</span>
+          <span class="chain-arrow">→</span>
+          <span><strong style="color:var(--green)">+5</strong> exact score</span>
+          <span class="chain-arrow">=</span>
+          <strong>${maxMatchPts} pts max per match</strong>
+        </div>
+        <div style="margin-top:0.4rem;font-size:0.8rem;color:var(--text-muted)">
+          Bonuses stack — nail the exact score and you earn all three.
+          &nbsp;<strong style="color:var(--red)">−1 pt</strong> if you enter a score prediction that's wrong.
+        </div>
+      </div>
+    </details>` : "";
 
   // View toggle
   const toggleEl = document.getElementById("viewToggle");
@@ -270,9 +292,25 @@ function matchCard(match, round) {
   const peers1 = peerPicks[match.id]?.team1 || [];
   const peers2 = peerPicks[match.id]?.team2 || [];
 
+  // Pts chip — top-right of card
+  const maxPts = ROUND_POINTS[round.id] + 6;
+  let ptsChip;
+  if (match.freebie) {
+    ptsChip = `<span class="match-pts-chip match-pts-free">FREE</span>`;
+  } else if (result) {
+    const earned = calcMatchPoints(round.id, match, p.winner ? p : null);
+    const cls = earned > 0 ? "match-pts-earned" : earned < 0 ? "match-pts-neg" : "match-pts-zero";
+    ptsChip = `<span class="match-pts-chip ${cls}">${earned} / ${maxPts} pts</span>`;
+  } else {
+    ptsChip = `<span class="match-pts-chip match-pts-dim">/ ${maxPts} pts</span>`;
+  }
+
   return `
   <div class="match-card" id="match-${match.id}">
-    <div class="match-number">Match ${match.matchNum}${match.date ? " &nbsp;·&nbsp; " + match.date : ""}${kickoffBadge}${freebieBadge}</div>
+    <div class="match-number">
+      <span>Match ${match.matchNum}${match.date ? " · " + match.date : ""}${kickoffBadge}${freebieBadge}</span>
+      ${ptsChip}
+    </div>
     <div class="match-teams">
       <button class="team-btn ${teamClass("team1")} ${isLocked ? "locked" : ""}"
         ${clickable ? `onclick="pick('${match.id}','team1')"` : "disabled"}
@@ -321,7 +359,7 @@ function matchCard(match, round) {
         ${bonusLabel()}
         ${predictedScoreLabel()}
       </div>` : ""}
-    ${clickable && !result ? `<div class="score-hint">Score prediction (optional): <span style="color:var(--green);font-weight:600">+6 exact score</span> · <span style="color:var(--green);font-weight:600">+1 right margin</span> · <span style="color:var(--red);font-weight:600">−1 if wrong</span></div>` : ""}
+    ${clickable && !result ? `<div class="score-hint">Score (optional): <strong style="color:var(--green)">+1</strong> winner <span class="chain-arrow">→</span> <strong style="color:var(--green)">+1</strong> margin <span class="chain-arrow">→</span> <strong style="color:var(--green)">+5</strong> exact &nbsp;·&nbsp; <strong style="color:var(--red)">−1</strong> if wrong</div>` : ""}
   </div>`;
 }
 
