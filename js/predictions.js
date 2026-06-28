@@ -99,7 +99,7 @@ function renderRound(round) {
   document.getElementById("roundHeader").innerHTML = `
     <div class="round-info">
       <h2>${round.name}</h2>
-      <p>${deadlineStr}${pts} pt${pts > 1 ? "s" : ""} per correct winner · <strong style="color:var(--green)">+5 exact score</strong> · <strong style="color:var(--green)">+1 correct margin</strong> · <strong style="color:var(--red)">−1 if score is wrong</strong></p>
+      <p>${deadlineStr}${pts} pt${pts > 1 ? "s" : ""} per correct winner · <strong style="color:var(--green)">+6 exact score</strong> · <strong style="color:var(--green)">+1 correct margin</strong> · <strong style="color:var(--red)">−1 if score is wrong</strong></p>
     </div>
     <span class="badge badge-${round.status}">${round.status}</span>
   `;
@@ -119,7 +119,7 @@ function renderRound(round) {
     });
     const rem = pickable.filter(m => !myPicks[m.id]?.winner).length;
     if (rem > 0) {
-      alertHtml = `<div class="alert alert-warning"><strong>${rem} match${rem > 1 ? "es" : ""} unpicked</strong> — picks lock at kickoff. Score predictions are optional: <strong style="color:var(--green)">+5 exact</strong>, <strong style="color:var(--green)">+1 right margin</strong>, <strong style="color:var(--red)">−1 if wrong</strong>.</div>`;
+      alertHtml = `<div class="alert alert-warning"><strong>${rem} match${rem > 1 ? "es" : ""} unpicked</strong> — picks lock at kickoff. Score predictions are optional: <strong style="color:var(--green)">+6 exact score</strong>, <strong style="color:var(--green)">+1 right margin</strong>, <strong style="color:var(--red)">−1 if wrong</strong>.</div>`;
     } else {
       alertHtml = `<div class="alert alert-success">All open matches picked!</div>`;
     }
@@ -249,7 +249,7 @@ function matchCard(match, round) {
     let earned = correctWinner ? pts : 0;
     let bonusNote = "";
     if (!isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
-      if (s1 === a1 && s2 === a2) { if (correctWinner) { earned += 5; bonusNote = " +5 exact score!"; } }
+      if (s1 === a1 && s2 === a2) { if (correctWinner) { earned += 6; bonusNote = " +5 exact +1 margin!"; } }
       else if ((s1 - s2) === (a1 - a2)) { if (correctWinner) { earned += 1; bonusNote = " +1 correct margin"; } }
       else { earned -= 1; bonusNote = " −1 wrong score"; }
     }
@@ -321,7 +321,7 @@ function matchCard(match, round) {
         ${bonusLabel()}
         ${predictedScoreLabel()}
       </div>` : ""}
-    ${clickable && !result ? `<div class="score-hint">Score prediction (optional): <span style="color:var(--green);font-weight:600">+5 exact</span> · <span style="color:var(--green);font-weight:600">+1 right margin</span> · <span style="color:var(--red);font-weight:600">−1 if wrong</span></div>` : ""}
+    ${clickable && !result ? `<div class="score-hint">Score prediction (optional): <span style="color:var(--green);font-weight:600">+6 exact score</span> · <span style="color:var(--green);font-weight:600">+1 right margin</span> · <span style="color:var(--red);font-weight:600">−1 if wrong</span></div>` : ""}
   </div>`;
 }
 
@@ -518,7 +518,7 @@ function calcMatchPoints(roundId, match, pick) {
   const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);
   const a1 = parseInt(match.score1), a2 = parseInt(match.score2);
   if (!isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
-    if (s1 === a1 && s2 === a2) { if (correctWin) pts += 5; }
+    if (s1 === a1 && s2 === a2) { if (correctWin) pts += 6; } // +5 exact +1 margin
     else if ((s1 - s2) === (a1 - a2)) { if (correctWin) pts += 1; }
     else pts -= 1;
   }

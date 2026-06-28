@@ -73,11 +73,11 @@ async function initLeaderboard() {
             const a1 = parseInt(match.score1), a2 = parseInt(match.score2);
             if (!isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
               if (s1 === a1 && s2 === a2) {
-                if (correctWin) { statExact++; statMargin++; pts += 5; }
+                if (correctWin) { statExact++; statMargin++; pts += 6; } // +5 exact +1 margin
               } else if ((s1 - s2) === (a1 - a2)) {
                 if (correctWin) { statMargin++; pts += 1; }
               } else {
-                pts -= 1; // penalty for wrong score prediction
+                pts -= 1;
               }
             }
           }
