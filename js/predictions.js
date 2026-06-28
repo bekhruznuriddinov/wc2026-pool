@@ -66,7 +66,14 @@ async function loadRound(roundId, rounds) {
     .where("roundId", "==", roundId)
     .get();
   allMatches = matchSnap.docs.map(d => ({ id: d.id, ...d.data() }))
-    .sort((a, b) => a.matchNum - b.matchNum);
+    .sort((a, b) => {
+      const koA = a.kickoff ? (a.kickoff.toDate ? a.kickoff.toDate() : new Date(a.kickoff)) : null;
+      const koB = b.kickoff ? (b.kickoff.toDate ? b.kickoff.toDate() : new Date(b.kickoff)) : null;
+      if (koA && koB) return koA - koB;
+      if (koA) return -1;
+      if (koB) return 1;
+      return a.matchNum - b.matchNum;
+    });
 
   document.getElementById("loading").style.display = "none";
   document.getElementById("roundContent").style.display = "block";
