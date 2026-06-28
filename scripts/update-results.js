@@ -1,12 +1,13 @@
 // Syncs WC 2026 match data from football-data.org to Firestore:
-//   - Kickoff times for all upcoming/live matches (keeps cards accurate)
-//   - Results + scores for finished matches
-// Run via GitHub Actions on a schedule — see ../.github/workflows/update-results.yml
+//   - Kickoff times and results for all known matches (by team name)
+//   - Bracket auto-fill: creates/updates R16/QF/SF/Final match docs as
+//     teams become known after each round
+//   - Auto-creates round documents if missing
+//   - Auto-opens rounds 72h before first match; auto-completes when all results in
 
 const https = require("https");
 const admin = require("firebase-admin");
 
-// Map football-data.org team names → names used in our Firestore matches
 const TEAM_MAP = {
   "Côte d'Ivoire": "Ivory Coast",
   "United States": "USA",
@@ -16,10 +17,27 @@ const TEAM_MAP = {
   "Bosnia-Herzegovina": "Bosnia & Herzegovina",
   "Cape Verde Islands": "Cape Verde",
 };
+function normalize(name) { return TEAM_MAP[name] || name; }
 
-function normalize(name) {
-  return TEAM_MAP[name] || name;
-}
+// Maps football-data.org stage names → our Firestore round IDs
+const STAGE_TO_ROUND = {
+  "ROUND_OF_16":       "r16",
+  "QUARTER_FINALS":    "qf",
+  "SEMI_FINALS":       "sf",
+  "FINAL":             "final",
+  "THIRD_PLACE_MATCH": "third",
+};
+
+// Metadata for auto-creating round documents
+const ROUND_META = {
+  r16:   { name: "Round of 16",    order: 2 },
+  qf:    { name: "Quarter-finals", order: 3 },
+  sf:    { name: "Semi-finals",    order: 4 },
+  third: { name: "3rd Place",      order: 5 },
+  final: { name: "Final",          order: 6 },
+};
+
+const FINISHED_STATUSES = new Set(["FINISHED"]);
 
 function fetchJSON(url, headers) {
   return new Promise((resolve, reject) => {
@@ -29,20 +47,13 @@ function fetchJSON(url, headers) {
         let body = "";
         res.on("data", (chunk) => (body += chunk));
         res.on("end", () => {
-          try {
-            resolve(JSON.parse(body));
-          } catch (e) {
-            reject(new Error(`JSON parse error: ${e.message}\nResponse: ${body.slice(0, 300)}`));
-          }
+          try { resolve(JSON.parse(body)); }
+          catch (e) { reject(new Error(`JSON parse error: ${e.message}\nResponse: ${body.slice(0, 300)}`)); }
         });
       })
       .on("error", reject);
   });
 }
-
-// Knockout stage match statuses we care about
-const FINISHED_STATUSES = new Set(["FINISHED"]);
-const UPCOMING_STATUSES = new Set(["SCHEDULED", "TIMED", "IN_PLAY", "PAUSED"]);
 
 async function main() {
   const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
@@ -54,104 +65,186 @@ async function main() {
     "https://api.football-data.org/v4/competitions/WC/matches?season=2026",
     { "X-Auth-Token": process.env.FOOTBALL_DATA_API_KEY }
   );
-
   const apiMatches = data.matches || [];
-  console.log(`API returned ${apiMatches.length} total match(es)`);
+  console.log(`API returned ${apiMatches.length} match(es)`);
 
-  // Load all Firestore matches
-  const snap = await db.collection("matches").get();
-  const firestoreMatches = snap.docs.map((d) => ({ id: d.id, ref: d.ref, ...d.data() }));
+  // Load all current Firestore matches and rounds
+  const [matchesSnap, roundsSnap] = await Promise.all([
+    db.collection("matches").get(),
+    db.collection("rounds").get(),
+  ]);
+  const firestoreMatches = matchesSnap.docs.map((d) => ({ id: d.id, ref: d.ref, ...d.data() }));
+  const existingRounds = {};
+  roundsSnap.docs.forEach((d) => { existingRounds[d.id] = { ref: d.ref, ...d.data() }; });
 
-  const batch = db.batch();
-  let kickoffsUpdated = 0;
-  let resultsUpdated = 0;
-  let skipped = 0;
+  // ── Step 1: Update known matches (existing R32 docs matched by team name) ──
+  const batch1 = db.batch();
+  let kickoffsUpdated = 0, resultsUpdated = 0, skipped = 0;
 
   for (const m of apiMatches) {
     const apiHome = normalize(m.homeTeam?.name || "");
     const apiAway = normalize(m.awayTeam?.name || "");
+    if (!apiHome || !apiAway) continue;
 
-    // Skip if team names aren't real yet (TBD brackets)
-    if (!apiHome || !apiAway || apiHome === "TBD" || apiAway === "TBD") continue;
-
-    // Find matching Firestore doc by team names
     const fsMatch = firestoreMatches.find(
       (fm) =>
         (fm.team1 === apiHome && fm.team2 === apiAway) ||
         (fm.team1 === apiAway && fm.team2 === apiHome)
     );
+    if (!fsMatch) continue;
 
-    if (!fsMatch) continue; // group stage or unknown — skip silently
-
-    const status = m.status;
     const updates = {};
 
-    // Always sync kickoff time if we have one from the API
     if (m.utcDate) {
-      const apiKickoff = new Date(m.utcDate);
-      const fsKickoff = fsMatch.kickoff
+      const apiKo = new Date(m.utcDate);
+      const fsKo = fsMatch.kickoff
         ? (fsMatch.kickoff.toDate ? fsMatch.kickoff.toDate() : new Date(fsMatch.kickoff))
         : null;
-
-      const needsUpdate = !fsKickoff || Math.abs(apiKickoff - fsKickoff) > 60000; // >1 min diff
-      if (needsUpdate) {
-        updates.kickoff = apiKickoff;
+      if (!fsKo || Math.abs(apiKo - fsKo) > 60000) {
+        updates.kickoff = apiKo;
         kickoffsUpdated++;
-        console.log(`  [kickoff] ${fsMatch.team1} vs ${fsMatch.team2} → ${apiKickoff.toISOString()}`);
+        console.log(`  [kickoff] ${fsMatch.team1} vs ${fsMatch.team2} → ${apiKo.toISOString()}`);
       }
     }
 
-    // Sync result for finished matches
-    if (FINISHED_STATUSES.has(status) && !fsMatch.result) {
+    if (FINISHED_STATUSES.has(m.status) && !fsMatch.result) {
       const score = m.score?.fullTime;
       const winner = m.score?.winner;
-
       if (score && winner && winner !== "DRAW") {
         const homeIsTeam1 = fsMatch.team1 === apiHome;
-        const result =
-          winner === "HOME_TEAM"
-            ? homeIsTeam1 ? "team1" : "team2"
-            : homeIsTeam1 ? "team2" : "team1";
-
-        const score1 = homeIsTeam1 ? score.home : score.away;
-        const score2 = homeIsTeam1 ? score.away : score.home;
-
-        updates.result = result;
-        updates.score1 = score1;
-        updates.score2 = score2;
+        updates.result   = winner === "HOME_TEAM" ? (homeIsTeam1 ? "team1" : "team2") : (homeIsTeam1 ? "team2" : "team1");
+        updates.score1   = homeIsTeam1 ? score.home : score.away;
+        updates.score2   = homeIsTeam1 ? score.away : score.home;
         updates.updatedByBot = true;
-
-        const winnerName = result === "team1" ? fsMatch.team1 : fsMatch.team2;
-        console.log(
-          `  [result]  ${fsMatch.team1} ${score1}–${score2} ${fsMatch.team2}  →  ${winnerName} wins`
-        );
+        const winName = updates.result === "team1" ? fsMatch.team1 : fsMatch.team2;
+        console.log(`  [result]  ${fsMatch.team1} ${updates.score1}–${updates.score2} ${fsMatch.team2}  →  ${winName} wins`);
         resultsUpdated++;
+
+        // Also store apiMatchId for future reference
+        if (!fsMatch.apiMatchId) updates.apiMatchId = String(m.id);
       }
-    } else if (FINISHED_STATUSES.has(status) && fsMatch.result) {
+    } else if (FINISHED_STATUSES.has(m.status) && fsMatch.result) {
       skipped++;
     }
 
-    if (Object.keys(updates).length > 0) {
-      batch.update(fsMatch.ref, updates);
-    }
+    if (Object.keys(updates).length > 0) batch1.update(fsMatch.ref, updates);
   }
 
   if (kickoffsUpdated + resultsUpdated > 0) {
-    await batch.commit();
-    console.log(`\nMatch updates: ${kickoffsUpdated} kickoff(s), ${resultsUpdated} result(s). ${skipped} already had results.`);
+    await batch1.commit();
+    console.log(`\nMatch updates: ${kickoffsUpdated} kickoff(s), ${resultsUpdated} result(s). ${skipped} already recorded.`);
   } else {
     console.log(`\nNo match changes. ${skipped} already recorded.`);
   }
 
-  // ── Auto-manage round status ──────────────────────────────────────────────
-  // Opens a round 72h before its first match; completes it when all results are in.
+  // ── Step 2: Auto-fill knockout bracket (R16 → Final) ─────────────────────
+  const batch2 = db.batch();
+  let bracketChanges = 0;
+
+  for (const m of apiMatches) {
+    const roundId = STAGE_TO_ROUND[m.stage];
+    if (!roundId) continue;
+
+    const apiHome = normalize(m.homeTeam?.name || "");
+    const apiAway = normalize(m.awayTeam?.name || "");
+    const apiMatchId = String(m.id);
+    const teamsKnown = !!apiHome && !!apiAway;
+
+    // Auto-create round document if it doesn't exist yet
+    if (!existingRounds[roundId]) {
+      const meta = ROUND_META[roundId];
+      const roundRef = db.collection("rounds").doc(roundId);
+      batch2.set(roundRef, { name: meta.name, order: meta.order, status: "upcoming" }, { merge: true });
+      existingRounds[roundId] = { ref: roundRef, status: "upcoming" };
+      console.log(`[bracket] created round: ${roundId}`);
+      bracketChanges++;
+    }
+
+    // Find matching Firestore document: by apiMatchId first, then by team names
+    const fsMatch = firestoreMatches.find(
+      (fm) =>
+        fm.apiMatchId === apiMatchId ||
+        (teamsKnown &&
+          fm.roundId === roundId &&
+          ((fm.team1 === apiHome && fm.team2 === apiAway) ||
+            (fm.team1 === apiAway && fm.team2 === apiHome)))
+    );
+
+    if (fsMatch) {
+      const upd = {};
+      if (!fsMatch.apiMatchId) upd.apiMatchId = apiMatchId;
+
+      // Fill in teams if they just became known
+      if (teamsKnown && (!fsMatch.team1 || fsMatch.team1 === "TBD")) {
+        upd.team1 = apiHome;
+        upd.team2 = apiAway;
+        console.log(`[bracket] ${roundId}: teams revealed → ${apiHome} vs ${apiAway}`);
+      }
+
+      // Sync kickoff
+      if (m.utcDate) {
+        const apiKo = new Date(m.utcDate);
+        const fsKo = fsMatch.kickoff
+          ? (fsMatch.kickoff.toDate ? fsMatch.kickoff.toDate() : new Date(fsMatch.kickoff))
+          : null;
+        if (!fsKo || Math.abs(apiKo - fsKo) > 60000) upd.kickoff = apiKo;
+      }
+
+      // Sync result (use upd.team1 if we just set it above)
+      if (FINISHED_STATUSES.has(m.status) && !fsMatch.result && teamsKnown) {
+        const score = m.score?.fullTime;
+        const winner = m.score?.winner;
+        if (score && winner && winner !== "DRAW") {
+          const t1 = upd.team1 || fsMatch.team1;
+          const homeIsTeam1 = t1 === apiHome;
+          upd.result = winner === "HOME_TEAM" ? (homeIsTeam1 ? "team1" : "team2") : (homeIsTeam1 ? "team2" : "team1");
+          upd.score1 = homeIsTeam1 ? score.home : score.away;
+          upd.score2 = homeIsTeam1 ? score.away : score.home;
+          upd.updatedByBot = true;
+        }
+      }
+
+      if (Object.keys(upd).length > 0) {
+        batch2.update(fsMatch.ref, upd);
+        bracketChanges++;
+      }
+    } else {
+      // No existing doc — create one
+      const doc = {
+        roundId,
+        team1: apiHome || "TBD",
+        team2: apiAway || "TBD",
+        apiMatchId,
+        matchNum: m.id,
+        result: null,
+        score1: null,
+        score2: null,
+      };
+      if (m.utcDate) doc.kickoff = new Date(m.utcDate);
+      const newRef = db.collection("matches").doc();
+      batch2.set(newRef, doc);
+      console.log(`[bracket] ${roundId}: created ${doc.team1} vs ${doc.team2}`);
+      bracketChanges++;
+      firestoreMatches.push({ id: newRef.id, ref: newRef, ...doc });
+    }
+  }
+
+  if (bracketChanges > 0) {
+    await batch2.commit();
+    console.log(`Bracket: ${bracketChanges} change(s).`);
+  } else {
+    console.log("Bracket: no changes needed.");
+  }
+
+  // ── Step 3: Auto-manage round status ─────────────────────────────────────
   const OPEN_HOURS_BEFORE = 72;
   const now = new Date();
 
-  const roundsSnap = await db.collection("rounds").get();
-
-  // Re-fetch matches so we see any results written above
-  const freshMatchesSnap = await db.collection("matches").get();
+  // Re-fetch everything so we see all changes made above
+  const [freshMatchesSnap, freshRoundsSnap] = await Promise.all([
+    db.collection("matches").get(),
+    db.collection("rounds").get(),
+  ]);
   const matchesByRound = {};
   freshMatchesSnap.docs.forEach((d) => {
     const m = { id: d.id, ...d.data() };
@@ -159,11 +252,9 @@ async function main() {
     matchesByRound[m.roundId].push(m);
   });
 
-  for (const roundDoc of roundsSnap.docs) {
+  for (const roundDoc of freshRoundsSnap.docs) {
     const round = roundDoc.data();
     const roundId = roundDoc.id;
-
-    // Only consider matches with both real teams known
     const realMatches = (matchesByRound[roundId] || []).filter(
       (m) => m.team1 && m.team1 !== "TBD" && m.team2 && m.team2 !== "TBD"
     );
@@ -174,7 +265,6 @@ async function main() {
         .filter((m) => m.kickoff)
         .map((m) => (m.kickoff.toDate ? m.kickoff.toDate() : new Date(m.kickoff)))
         .sort((a, b) => a - b);
-
       if (kickoffs.length > 0) {
         const hoursUntil = (kickoffs[0] - now) / 36e5;
         if (hoursUntil <= OPEN_HOURS_BEFORE) {
@@ -190,7 +280,7 @@ async function main() {
     }
   }
 
-  console.log("Round status check done.");
+  console.log("Done.");
 }
 
 main().catch((err) => {
