@@ -39,7 +39,7 @@ function renderUserBar(user) {
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:8px">
       <div class="user-avatar">${initials(user.name)}</div>
-      <span style="color:rgba(255,255,255,0.75);font-size:0.82rem;white-space:nowrap">${user.name}</span>
+      <span class="user-name" style="color:rgba(255,255,255,0.75);font-size:0.82rem;white-space:nowrap">${user.name}</span>
     </div>
     ${adminLink}
     <button class="btn btn-ghost btn-sm" onclick="logout()" style="color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.15);white-space:nowrap">Sign out</button>

@@ -582,10 +582,60 @@ details summary { cursor: pointer; color: var(--text-muted); font-size: 0.875rem
 details summary:hover { color: var(--text); }
 
 @media (max-width: 640px) {
-  .topnav { padding: 0 1rem; }
-  .topnav-inner { height: 56px; }
+  /* Nav */
+  .topnav { padding: 0 0.75rem; }
+  .topnav-inner { height: 56px; gap: 0.5rem; }
   .logo-label { display: none; }
-  nav .nav-link { padding: 0.35rem 0.6rem; font-size: 0.8rem; }
-  .page { padding: 1.25rem 1rem 4rem; }
+  .logo-img { height: 22px; }
+  .logo-divider { display: none; }
+  nav .nav-link { padding: 0.3rem 0.5rem; font-size: 0.78rem; }
+
+  /* User bar — hide name to save space */
+  .user-name { display: none; }
+  #userBar { gap: 0.4rem !important; }
+  #userBar .btn-ghost { padding: 0.3rem 0.55rem; font-size: 0.75rem; }
+
+  /* Page */
+  .page { padding: 1rem 0.85rem 5rem; }
+
+  /* Hero (login) */
+  .hero { padding: 2rem 1.25rem; border-radius: 10px; }
+  .hero h1 { font-size: 1.4rem; }
+  .hero p { font-size: 0.85rem; }
+
+  /* Stat cards */
+  .stats-row { gap: 0.65rem; }
+  .stat-value { font-size: 1.4rem; }
+
+  /* Match cards */
+  .match-card { padding: 0.75rem 0.85rem; }
+  .team-flag .fi { width: 1.65rem; height: 1.25rem; }
+  .team-name { font-size: 0.73rem; }
+  .team-btn { padding: 0.65rem 0.4rem; min-height: 72px; }
+  .score-input { width: 36px !important; font-size: 0.9rem !important; }
+
+  /* Submit bar — flush to bottom on mobile */
+  .submit-bar {
+    bottom: 0;
+    border-radius: var(--radius) var(--radius) 0 0;
+    margin-top: 1rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+    padding: 0.85rem 1rem;
+  }
+  .submit-bar .btn-save { width: 100%; text-align: center; justify-content: center; }
+
+  /* Leaderboard table — horizontal scroll */
+  #tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .leaderboard-table { min-width: 560px; }
+
+  /* Admin tables already have overflow:auto on wrappers */
   .admin-match-row { grid-template-columns: 1fr 1fr; }
+
+  /* Round tabs */
+  .round-tab { padding: 0.35rem 0.7rem; font-size: 0.78rem; }
+
+  /* Page header */
+  .page-header h1 { font-size: 1.25rem; }
 }
