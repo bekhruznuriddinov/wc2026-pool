@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Predictions — World Cup 2026</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg-stars"></div>
+
+<div class="page wide">
+
+  <!-- Header -->
+  <header class="site-header">
+    <a href="predictions.html" class="logo">
+      <span class="trophy">🏆</span> WC 2026 Pool
+    </a>
+    <nav>
+      <a href="predictions.html" class="btn btn-ghost" style="color:var(--text)">My Picks</a>
+      <a href="leaderboard.html" class="btn btn-ghost">Leaderboard</a>
+    </nav>
+    <div id="userBar" class="user-bar" style="min-width:180px"></div>
+  </header>
+
+  <!-- Round tabs -->
+  <div id="roundTabs" class="rounds-nav"></div>
+
+  <!-- Loading -->
+  <div id="loading" class="loading-center">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- No rounds yet -->
+  <div id="noRounds" style="display:none">
+    <div class="empty-state">
+      <div class="icon">⏳</div>
+      <h3>No rounds open yet</h3>
+      <p>The admin hasn't opened any rounds for predictions. Check back soon!</p>
+    </div>
+  </div>
+
+  <!-- Round content -->
+  <div id="roundContent" style="display:none">
+    <div id="roundHeader" class="round-header"></div>
+    <div id="roundAlert"></div>
+    <div id="matchesList" class="matches-grid"></div>
+  </div>
+
+  <!-- Sticky submit bar -->
+  <div id="submitBar" class="submit-bar" style="display:none">
+    <div>
+      <span id="pickCount" style="font-weight:600"></span>
+      <span class="text-muted text-small" style="margin-left:0.5rem">— save before the deadline!</span>
+    </div>
+    <button id="submitBtn" class="btn btn-primary" style="width:auto;padding:0.65rem 1.5rem"
+      onclick="submitPicks()">
+      Save predictions
+    </button>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="js/firebase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/predictions.js"></script>
+</body>
+</html>
