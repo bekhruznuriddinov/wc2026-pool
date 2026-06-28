@@ -17,21 +17,25 @@ const db = firebase.firestore();
 // Admin email — whoever should have access to admin.html
 const ADMIN_EMAIL = "bek@hcap.com";
 
-// Country flags
+// Country flags — ISO 3166-1 alpha-2 codes for flag-icons library
 const FLAGS = {
-  "South Africa": "🇿🇦", "Canada": "🇨🇦", "Germany": "🇩🇪",
-  "Paraguay": "🇵🇾", "Netherlands": "🇳🇱", "Morocco": "🇲🇦",
-  "Brazil": "🇧🇷", "Japan": "🇯🇵", "France": "🇫🇷",
-  "Sweden": "🇸🇪", "Ivory Coast": "🇨🇮", "Norway": "🇳🇴",
-  "Mexico": "🇲🇽", "Ecuador": "🇪🇨", "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
-  "DR Congo": "🇨🇩", "Congo DR": "🇨🇩", "USA": "🇺🇸",
-  "Bosnia & Herzegovina": "🇧🇦", "Belgium": "🇧🇪", "Senegal": "🇸🇳",
-  "Portugal": "🇵🇹", "Croatia": "🇭🇷", "Spain": "🇪🇸",
-  "Austria": "🇦🇹", "Switzerland": "🇨🇭", "Algeria": "🇩🇿",
-  "Argentina": "🇦🇷", "Cape Verde": "🇨🇻", "Colombia": "🇨🇴",
-  "Ghana": "🇬🇭", "Australia": "🇦🇺", "Egypt": "🇪🇬",
+  "South Africa": "za",  "Canada": "ca",    "Germany": "de",
+  "Paraguay": "py",       "Netherlands": "nl","Morocco": "ma",
+  "Brazil": "br",         "Japan": "jp",     "France": "fr",
+  "Sweden": "se",         "Ivory Coast": "ci","Norway": "no",
+  "Mexico": "mx",         "Ecuador": "ec",   "England": "gb-eng",
+  "DR Congo": "cd",       "Congo DR": "cd",  "USA": "us",
+  "Bosnia & Herzegovina": "ba", "Belgium": "be", "Senegal": "sn",
+  "Portugal": "pt",       "Croatia": "hr",   "Spain": "es",
+  "Austria": "at",        "Switzerland": "ch","Algeria": "dz",
+  "Argentina": "ar",      "Cape Verde": "cv","Colombia": "co",
+  "Ghana": "gh",          "Australia": "au", "Egypt": "eg",
 };
-function flag(name) { return FLAGS[name] || "🏳️"; }
+function flag(name) {
+  const code = FLAGS[name];
+  if (!code) return '<span style="font-size:1.2rem">🏳️</span>';
+  return `<span class="fi fi-${code}" title="${name}"></span>`;
+}
 
 // Points per round
 const ROUND_POINTS = {

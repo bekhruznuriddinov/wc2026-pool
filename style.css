@@ -339,7 +339,9 @@ select option { background: #fff; color: var(--text); }
   opacity: 0.6;
 }
 .team-btn.locked { cursor: default; }
-.team-flag { font-size: 1.6rem; line-height: 1; }
+.team-flag { line-height: 1; display: flex; align-items: center; justify-content: center; }
+.team-flag .fi { width: 2.2rem; height: 1.65rem; border-radius: 3px; box-shadow: 0 1px 4px rgba(0,0,0,0.35); }
+.fi { vertical-align: middle; border-radius: 2px; }
 .team-name { font-size: 0.82rem; font-weight: 600; line-height: 1.2; }
 
 .vs {
