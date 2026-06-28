@@ -528,27 +528,25 @@ select option { background: #fff; color: var(--text); }
   margin-top: 2rem;
   background: var(--navy);
   border-radius: var(--radius);
-  padding: 1rem 1.25rem;
+  padding: 0.75rem 1.25rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  flex-wrap: wrap;
   box-shadow: 0 4px 20px rgba(15,33,64,0.25);
 }
 .submit-bar span { color: rgba(255,255,255,0.85); font-size: 0.875rem; }
-.submit-bar .btn-save {
-  background: var(--green);
-  color: #fff;
-  border: none;
-  border-radius: 7px;
-  padding: 0.6rem 1.4rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
+
+.save-indicator {
+  font-size: 0.8rem;
+  font-weight: 500;
+  min-width: 80px;
+  text-align: right;
+  transition: opacity 0.3s;
 }
-.submit-bar .btn-save:disabled { opacity: 0.4; cursor: not-allowed; }
-.submit-bar .btn-save:hover:not(:disabled) { background: var(--green-dim); }
+.save-indicator.saving { color: rgba(255,255,255,0.5); }
+.save-indicator.saved  { color: #4ade80; }
+.save-indicator.error  { color: #f87171; }
 
 /* ADMIN */
 .admin-section { margin-bottom: 2rem; }
@@ -619,12 +617,8 @@ details summary:hover { color: var(--text); }
     bottom: 0;
     border-radius: var(--radius) var(--radius) 0 0;
     margin-top: 1rem;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.65rem;
-    padding: 0.85rem 1rem;
+    padding: 0.75rem 1rem;
   }
-  .submit-bar .btn-save { width: 100%; text-align: center; justify-content: center; }
 
   /* Leaderboard table — horizontal scroll */
   #tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }

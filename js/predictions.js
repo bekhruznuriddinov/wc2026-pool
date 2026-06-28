@@ -5,6 +5,7 @@ let allMatches = [];
 let myPicks = {};     // { matchId: { winner: 'team1', score1: 2, score2: 1 } }
 let peerPicks = {};   // { matchId: { team1: ['Alice', 'Bob'], team2: ['Carol'] } }
 let currentRoundId = null;
+let saveTimer = null;
 
 async function init() {
   document.getElementById("loading").style.display = "flex";
@@ -265,11 +266,13 @@ function matchCard(match, round) {
           <input class="score-input" type="number" min="0" max="20" placeholder="–"
             value="${s1val}"
             oninput="updateScore('${match.id}','score1',this.value)"
+            onblur="autoSave()"
             onclick="event.stopPropagation()">
           <span class="score-dash">:</span>
           <input class="score-input" type="number" min="0" max="20" placeholder="–"
             value="${s2val}"
             oninput="updateScore('${match.id}','score2',this.value)"
+            onblur="autoSave()"
             onclick="event.stopPropagation()">
         ` : `
           <span class="score-static">${
@@ -305,7 +308,6 @@ function matchCard(match, round) {
 function pick(matchId, side) {
   const p = myPicks[matchId] || {};
   if (p.winner === side) {
-    // toggle off winner but keep scores
     myPicks[matchId] = { ...p, winner: null };
     if (!myPicks[matchId].winner) delete myPicks[matchId].winner;
   } else {
@@ -313,6 +315,7 @@ function pick(matchId, side) {
   }
   rerenderCard(matchId);
   updatePickCounter();
+  autoSave();
 }
 
 function updateScore(matchId, field, val) {
@@ -327,6 +330,7 @@ function updateScore(matchId, field, val) {
     myPicks[matchId].winner = s1 > s2 ? "team1" : "team2";
     rerenderCard(matchId);
     updatePickCounter();
+    autoSave();
   } else {
     // Just update the card classes without re-rendering inputs (preserves focus)
     const match = allMatches.find(m => m.id === matchId);
@@ -354,40 +358,51 @@ function updatePickCounter() {
   });
   const picked = pickable.filter(m => myPicks[m.id]?.winner).length;
   document.getElementById("pickCount").textContent = `${picked}/${pickable.length} picked`;
-  document.getElementById("submitBtn").disabled = picked === 0;
 }
 
-async function submitPicks() {
-  const btn = document.getElementById("submitBtn");
-  btn.disabled = true;
-  btn.textContent = "Saving…";
-  try {
-    const roundDoc = await db.collection("rounds").doc(currentRoundId).get();
-    const roundData = roundDoc.exists ? roundDoc.data() : null;
-    if (!roundData || roundData.status !== "open") {
-      showToast("This round is no longer open.", "error");
-      btn.disabled = false; btn.textContent = "Save predictions"; return;
-    }
-    if (roundData.deadline) {
-      const deadline = roundData.deadline.toDate ? roundData.deadline.toDate() : new Date(roundData.deadline);
-      if (new Date() > deadline) {
-        showToast("The deadline for this round has passed.", "error");
-        btn.disabled = false; btn.textContent = "Save predictions"; return;
+function autoSave() {
+  if (!currentRoundId) return;
+  clearTimeout(saveTimer);
+  setSaveStatus("saving");
+  saveTimer = setTimeout(async () => {
+    try {
+      const roundDoc = await db.collection("rounds").doc(currentRoundId).get();
+      const roundData = roundDoc.exists ? roundDoc.data() : null;
+      if (!roundData || roundData.status !== "open") { setSaveStatus(""); return; }
+      if (roundData.deadline) {
+        const deadline = roundData.deadline.toDate ? roundData.deadline.toDate() : new Date(roundData.deadline);
+        if (new Date() > deadline) { setSaveStatus(""); return; }
       }
+      await db.collection("predictions").doc(user.userId).set({
+        picks: myPicks,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      setSaveStatus("saved");
+    } catch (err) {
+      console.error(err);
+      setSaveStatus("error");
     }
-    await db.collection("predictions").doc(user.userId).set({
-      picks: myPicks,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-    showToast("Predictions saved!", "success");
-    document.getElementById("roundAlert").innerHTML =
-      `<div class="alert alert-success">Predictions saved — good luck!</div>`;
-  } catch (err) {
-    console.error(err);
-    showToast("Failed to save. Try again.", "error");
+  }, 700);
+}
+
+function setSaveStatus(status) {
+  const el = document.getElementById("saveStatus");
+  if (!el) return;
+  clearTimeout(el._t);
+  if (status === "saving") {
+    el.textContent = "Saving…";
+    el.className = "save-indicator saving";
+  } else if (status === "saved") {
+    el.textContent = "Saved ✓";
+    el.className = "save-indicator saved";
+    el._t = setTimeout(() => { el.textContent = ""; el.className = "save-indicator"; }, 2500);
+  } else if (status === "error") {
+    el.textContent = "Failed to save";
+    el.className = "save-indicator error";
+  } else {
+    el.textContent = "";
+    el.className = "save-indicator";
   }
-  btn.disabled = false;
-  btn.textContent = "Save predictions";
 }
 
 function calcRoundScore(roundId) {
