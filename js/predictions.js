@@ -99,7 +99,7 @@ function renderRound(round) {
   document.getElementById("roundHeader").innerHTML = `
     <div class="round-info">
       <h2>${round.name}</h2>
-      <p>${deadlineStr}${pts} pt${pts > 1 ? "s" : ""} per correct winner · +5 exact score · +1 correct margin · <strong style="color:var(--red)">−1 if score is wrong</strong></p>
+      <p>${deadlineStr}${pts} pt${pts > 1 ? "s" : ""} per correct winner · <strong style="color:var(--green)">+5 exact score</strong> · <strong style="color:var(--green)">+1 correct margin</strong> · <strong style="color:var(--red)">−1 if score is wrong</strong></p>
     </div>
     <span class="badge badge-${round.status}">${round.status}</span>
   `;
@@ -119,7 +119,7 @@ function renderRound(round) {
     });
     const rem = pickable.filter(m => !myPicks[m.id]?.winner).length;
     if (rem > 0) {
-      alertHtml = `<div class="alert alert-warning"><strong>${rem} match${rem > 1 ? "es" : ""} unpicked</strong> — picks lock at kickoff. Score predictions are optional: +5 exact, +1 right margin, <strong>−1 if wrong</strong>.</div>`;
+      alertHtml = `<div class="alert alert-warning"><strong>${rem} match${rem > 1 ? "es" : ""} unpicked</strong> — picks lock at kickoff. Score predictions are optional: <strong style="color:var(--green)">+5 exact</strong>, <strong style="color:var(--green)">+1 right margin</strong>, <strong style="color:var(--red)">−1 if wrong</strong>.</div>`;
     } else {
       alertHtml = `<div class="alert alert-success">All open matches picked!</div>`;
     }
@@ -321,7 +321,7 @@ function matchCard(match, round) {
         ${bonusLabel()}
         ${predictedScoreLabel()}
       </div>` : ""}
-    ${clickable && !result ? `<div class="score-hint">Score prediction (optional): +5 exact · +1 right margin · <span style="color:var(--red);font-weight:600">−1 if wrong</span></div>` : ""}
+    ${clickable && !result ? `<div class="score-hint">Score prediction (optional): <span style="color:var(--green);font-weight:600">+5 exact</span> · <span style="color:var(--green);font-weight:600">+1 right margin</span> · <span style="color:var(--red);font-weight:600">−1 if wrong</span></div>` : ""}
   </div>`;
 }
 
