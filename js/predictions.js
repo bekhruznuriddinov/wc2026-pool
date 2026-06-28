@@ -23,7 +23,8 @@ async function init() {
     myPicks = picksDoc.exists ? (picksDoc.data().picks || {}) : {};
 
     const openRound = rounds.find(r => r.status === "open");
-    currentRoundId = (openRound || rounds[0]).id;
+    const nonCompleteRound = rounds.find(r => r.status !== "complete");
+    currentRoundId = (openRound || nonCompleteRound || rounds[0]).id;
     await loadRound(currentRoundId, rounds);
 
   } catch (err) {
@@ -276,9 +277,17 @@ async function submitPicks() {
   btn.textContent = "Saving…";
   try {
     const roundDoc = await db.collection("rounds").doc(currentRoundId).get();
-    if (!roundDoc.exists || roundDoc.data().status !== "open") {
+    const roundData = roundDoc.exists ? roundDoc.data() : null;
+    if (!roundData || roundData.status !== "open") {
       showToast("This round is no longer open.", "error");
       btn.disabled = false; btn.textContent = "Save predictions"; return;
+    }
+    if (roundData.deadline) {
+      const deadline = roundData.deadline.toDate ? roundData.deadline.toDate() : new Date(roundData.deadline);
+      if (new Date() > deadline) {
+        showToast("The deadline for this round has passed.", "error");
+        btn.disabled = false; btn.textContent = "Save predictions"; return;
+      }
     }
     await db.collection("predictions").doc(user.userId).set({
       picks: myPicks,

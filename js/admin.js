@@ -245,59 +245,65 @@ async function recalcScores(roundId) {
   if (btn) { btn.disabled = true; btn.textContent = "Recalculating…"; }
 
   try {
-    // Load matches for this round
     const matchSnap = await db.collection("matches").where("roundId", "==", roundId).get();
-
     const matches = matchSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    // Load all predictions
     const predsSnap = await db.collection("predictions").get();
-
     const batch = db.batch();
     let updated = 0;
 
     for (const predDoc of predsSnap.docs) {
-      const userId = predDoc.id;
       const picks = predDoc.data().picks || {};
-
       let roundScore = 0;
+
       matches.forEach(m => {
-        if (m.result && picks[m.id] === m.result) {
-          roundScore += ROUND_POINTS[roundId];
+        const pick = picks[m.id];
+        // picks are objects { winner, score1, score2 } or legacy strings
+        const winner = (pick && typeof pick === "object") ? pick.winner : pick;
+        if (!m.result || winner !== m.result) return;
+
+        let pts = ROUND_POINTS[roundId] || 0;
+
+        // Scoreline bonuses
+        if (pick && typeof pick === "object") {
+          const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);
+          const a1 = parseInt(m.score1),    a2 = parseInt(m.score2);
+          if (!isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
+            if (s1 === a1 && s2 === a2) pts += 5;
+            else if ((s1 - s2) === (a1 - a2)) pts += 1;
+          }
         }
+
+        roundScore += pts;
       });
 
-      // Store per-round score
-      const predRef = db.collection("predictions").doc(userId);
-      batch.update(predRef, { [`roundScores.${roundId}`]: roundScore });
-
-      // Recalc total — load all round scores after batch
+      batch.update(db.collection("predictions").doc(predDoc.id),
+        { [`roundScores.${roundId}`]: roundScore });
       updated++;
     }
 
     await batch.commit();
 
-    // Now update totalPoints for each user
+    // Recalculate totalPoints from all round scores
     const predsSnap2 = await db.collection("predictions").get();
     const batch2 = db.batch();
 
     for (const predDoc of predsSnap2.docs) {
       const roundScores = predDoc.data().roundScores || {};
-      const total = Object.values(roundScores).reduce((s, v) => s + v, 0);
+      const total = Object.values(roundScores).reduce((s, v) => s + (v || 0), 0);
       batch2.update(db.collection("users").doc(predDoc.id), { totalPoints: total });
       batch2.update(db.collection("predictions").doc(predDoc.id), { totalPoints: total });
     }
 
     await batch2.commit();
-
     showAdminAlert(`Scores recalculated for ${updated} players.`, "success");
 
   } catch (err) {
     console.error(err);
     showAdminAlert("Failed to recalculate scores.", "error");
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = "Recalculate all scores"; }
   }
-
-  if (btn) { btn.disabled = false; btn.textContent = "Recalculate all scores"; }
 }
 
 document.getElementById("recalcBtn").addEventListener("click", async () => {
