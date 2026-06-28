@@ -155,10 +155,10 @@ async function loadPeerPicks() {
 
 function pickerLabel(names) {
   if (!names || names.length === 0) return "";
-  const first = names[0].split(" ")[0];
-  if (names.length === 1) return `${first} picked`;
-  if (names.length === 2) return `${first} & ${names[1].split(" ")[0]} picked`;
-  return `${first} & ${names.length - 1} others picked`;
+  const MAX = 4;
+  const firsts = names.map(n => n.split(" ")[0]);
+  if (firsts.length <= MAX) return firsts.join(", ");
+  return firsts.slice(0, MAX).join(", ") + "…";
 }
 
 function matchCard(match, round) {
