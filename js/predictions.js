@@ -95,7 +95,7 @@ function renderRound(round) {
   document.getElementById("roundHeader").innerHTML = `
     <div class="round-info">
       <h2>${round.name}</h2>
-      <p>${deadlineStr}${pts} pt${pts > 1 ? "s" : ""} per correct winner · +5 exact score · +1 correct margin</p>
+      <p>${deadlineStr}${pts} pt${pts > 1 ? "s" : ""} per correct winner · +5 exact score · +1 correct margin · −1 wrong score</p>
     </div>
     <span class="badge badge-${round.status}">${round.status}</span>
   `;
@@ -229,9 +229,10 @@ function matchCard(match, round) {
     const correctWinner = p.winner === result;
     let earned = correctWinner ? pts : 0;
     let bonusNote = "";
-    if (correctWinner && !isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
-      if (s1 === a1 && s2 === a2) { earned += 5; bonusNote = " +5 exact score!"; }
-      else if ((s1 - s2) === (a1 - a2)) { earned += 1; bonusNote = " +1 correct margin"; }
+    if (!isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
+      if (s1 === a1 && s2 === a2) { if (correctWinner) { earned += 5; bonusNote = " +5 exact score!"; } }
+      else if ((s1 - s2) === (a1 - a2)) { if (correctWinner) { earned += 1; bonusNote = " +1 correct margin"; } }
+      else { earned -= 1; bonusNote = " −1 wrong score"; }
     }
     const color = correctWinner ? "text-green" : "text-red";
     const icon = correctWinner ? "✓" : "✗";
@@ -301,7 +302,7 @@ function matchCard(match, round) {
         ${bonusLabel()}
         ${predictedScoreLabel()}
       </div>` : ""}
-    ${clickable && !result ? `<div class="score-hint">Optional: predict the score for +5 (exact) or +1 (right margin)</div>` : ""}
+    ${clickable && !result ? `<div class="score-hint">Optional score bet: +5 exact · +1 right margin · −1 if wrong</div>` : ""}
   </div>`;
 }
 
@@ -413,13 +414,14 @@ function calcMatchPoints(roundId, match, pick) {
   if (!match.result) return 0;
   if (match.freebie) return ROUND_POINTS[roundId];
   if (!pick?.winner) return 0;
-  if (pick.winner !== match.result) return 0;
-  let pts = ROUND_POINTS[roundId];
+  const correctWin = pick.winner === match.result;
+  let pts = correctWin ? ROUND_POINTS[roundId] : 0;
   const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);
   const a1 = parseInt(match.score1), a2 = parseInt(match.score2);
   if (!isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
-    if (s1 === a1 && s2 === a2) pts += 5;
-    else if ((s1 - s2) === (a1 - a2)) pts += 1;
+    if (s1 === a1 && s2 === a2) { if (correctWin) pts += 5; }
+    else if ((s1 - s2) === (a1 - a2)) { if (correctWin) pts += 1; }
+    else pts -= 1;
   }
   return pts;
 }

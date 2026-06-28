@@ -74,6 +74,8 @@ async function initLeaderboard() {
                 if (correctWin) { statExact++; statMargin++; pts += 5; }
               } else if ((s1 - s2) === (a1 - a2)) {
                 if (correctWin) { statMargin++; pts += 1; }
+              } else {
+                pts -= 1; // penalty for wrong score prediction
               }
             }
           }
