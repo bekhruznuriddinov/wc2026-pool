@@ -149,7 +149,7 @@ async function loadPeerPicks() {
       });
     });
   } catch (e) {
-    console.warn("Could not load peer picks", e);
+    console.error("loadPeerPicks failed:", e.code, e.message);
   }
 }
 
