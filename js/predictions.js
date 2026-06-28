@@ -351,18 +351,11 @@ function rerenderCard(matchId) {
 }
 
 function updatePickCounter() {
-  const now = new Date();
   const realMatches = allMatches.filter(m => m.team1 && m.team1 !== "TBD");
   const freebies = realMatches.filter(m => m.freebie);
-  const pickable = realMatches.filter(m => {
-    if (m.freebie) return false;
-    const ko = m.kickoff ? (m.kickoff.toDate ? m.kickoff.toDate() : new Date(m.kickoff)) : null;
-    return !ko || now < ko;
-  });
-  const manualPicked = pickable.filter(m => myPicks[m.id]?.winner).length;
-  const total = pickable.length + freebies.length;
-  const picked = manualPicked + freebies.length;
-  document.getElementById("pickCount").textContent = `${picked}/${total} picked`;
+  const nonFreebies = realMatches.filter(m => !m.freebie);
+  const picked = nonFreebies.filter(m => myPicks[m.id]?.winner).length + freebies.length;
+  document.getElementById("pickCount").textContent = `${picked}/${realMatches.length} picked`;
 }
 
 function autoSave() {
