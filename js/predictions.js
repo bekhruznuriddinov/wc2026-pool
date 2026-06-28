@@ -59,9 +59,9 @@ async function loadRound(roundId, rounds) {
 
   const matchSnap = await db.collection("matches")
     .where("roundId", "==", roundId)
-    .orderBy("matchNum")
     .get();
-  allMatches = matchSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+  allMatches = matchSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => a.matchNum - b.matchNum);
 
   document.getElementById("loading").style.display = "none";
   document.getElementById("roundContent").style.display = "block";

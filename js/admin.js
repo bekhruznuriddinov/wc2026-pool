@@ -94,8 +94,9 @@ document.getElementById("createRoundBtn").addEventListener("click", async () => 
 
 // ---- MATCHES ----
 async function loadMatchesAdmin() {
-  const snap = await db.collection("matches").orderBy("matchNum").get();
-  const matches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const snap = await db.collection("matches").get();
+  const matches = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => (a.roundId + a.matchNum).localeCompare(b.roundId + b.matchNum) || a.matchNum - b.matchNum);
   renderMatchesAdmin(matches);
 }
 
@@ -240,6 +241,7 @@ async function recalcScores(roundId) {
   try {
     // Load matches for this round
     const matchSnap = await db.collection("matches").where("roundId", "==", roundId).get();
+
     const matches = matchSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
     // Load all predictions
