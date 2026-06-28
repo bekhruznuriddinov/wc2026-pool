@@ -313,7 +313,7 @@ const R32_KICKOFFS = [
   { teams: ["Ivory Coast", "Norway"],            kickoff: "2026-06-30T17:00:00Z" },
   { teams: ["France", "Sweden"],                 kickoff: "2026-06-30T21:00:00Z" },
   { teams: ["Mexico", "Ecuador"],                kickoff: "2026-07-01T01:00:00Z" },
-  { teams: ["England", "Congo DR"],              kickoff: "2026-07-01T16:00:00Z" },
+  { teams: ["England", "DR Congo"],              kickoff: "2026-07-01T16:00:00Z" },
   { teams: ["Belgium", "Senegal"],               kickoff: "2026-07-01T20:00:00Z" },
   { teams: ["USA", "Bosnia & Herzegovina"],      kickoff: "2026-07-02T00:00:00Z" },
   { teams: ["Spain", "Austria"],                 kickoff: "2026-07-02T19:00:00Z" },

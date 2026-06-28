@@ -24,7 +24,7 @@ const FLAGS = {
   "Brazil": "br",         "Japan": "jp",     "France": "fr",
   "Sweden": "se",         "Ivory Coast": "ci","Norway": "no",
   "Mexico": "mx",         "Ecuador": "ec",   "England": "gb-eng",
-  "DR Congo": "cd",       "Congo DR": "cd",  "USA": "us",
+  "DR Congo": "cd",       "USA": "us",
   "Bosnia & Herzegovina": "ba", "Belgium": "be", "Senegal": "sn",
   "Portugal": "pt",       "Croatia": "hr",   "Spain": "es",
   "Austria": "at",        "Switzerland": "ch","Algeria": "dz",

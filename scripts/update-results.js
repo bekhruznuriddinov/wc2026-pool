@@ -10,8 +10,8 @@ const admin = require("firebase-admin");
 const TEAM_MAP = {
   "Côte d'Ivoire": "Ivory Coast",
   "United States": "USA",
-  "Democratic Republic of Congo": "Congo DR",
-  "DR Congo": "Congo DR",
+  "Democratic Republic of Congo": "DR Congo",
+  "Congo DR": "DR Congo",
   "Bosnia and Herzegovina": "Bosnia & Herzegovina",
   "Bosnia-Herzegovina": "Bosnia & Herzegovina",
   "Cape Verde Islands": "Cape Verde",
