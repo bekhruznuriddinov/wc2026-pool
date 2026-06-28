@@ -150,7 +150,13 @@ function renderMatchesAdmin(matches) {
               </div>
             </td>
             <td>
-              <button class="btn btn-danger btn-sm" onclick="deleteMatch('${m.id}')">Delete</button>
+              <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+                <button class="btn btn-sm ${m.freebie ? "btn-success" : "btn-ghost"}"
+                  onclick="toggleFreebie('${m.id}', ${!!m.freebie})">
+                  ${m.freebie ? "★ Freebie" : "Freebie"}
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="deleteMatch('${m.id}')">Delete</button>
+              </div>
             </td>
           </tr>`).join("")}
       </tbody>
@@ -174,6 +180,17 @@ async function setResult(matchId, result) {
     status: result ? "complete" : "pending"
   });
   showAdminAlert("Result saved. Recalculate scores when all matches in the round are done.", "info");
+}
+
+async function toggleFreebie(matchId, current) {
+  await db.collection("matches").doc(matchId).update({ freebie: !current });
+  showAdminAlert(
+    !current
+      ? "Freebie set — everyone gets base points for this match."
+      : "Freebie removed.",
+    "success"
+  );
+  await loadMatchesAdmin();
 }
 
 async function deleteMatch(matchId) {

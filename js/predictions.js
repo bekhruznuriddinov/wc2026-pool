@@ -195,6 +195,10 @@ function matchCard(match, round) {
       ? `<span style="margin-left:6px;font-size:0.65rem;color:var(--text-muted)">${kickoff.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</span>`
       : "";
 
+  const freebieBadge = match.freebie
+    ? `<span style="margin-left:6px;font-size:0.65rem;background:rgba(34,197,94,0.15);color:#22c55e;padding:1px 6px;border-radius:4px;font-weight:600">FREE PICK</span>`
+    : "";
+
   function teamClass(side) {
     if (result) {
       if (p.winner === side) return result === side ? "correct" : "wrong";
@@ -205,7 +209,12 @@ function matchCard(match, round) {
 
   // Bonus points earned display
   function bonusLabel() {
-    if (!result || !p.winner) return "";
+    if (!result) return "";
+    if (match.freebie) {
+      const pts = ROUND_POINTS[round.id];
+      return `<span class="text-green">★ Free pick — ${pts} pt${pts !== 1 ? "s" : ""} for everyone</span>`;
+    }
+    if (!p.winner) return "";
     const pts = ROUND_POINTS[round.id];
     const a1 = parseInt(match.score1), a2 = parseInt(match.score2);
     const s1 = parseInt(p.score1), s2 = parseInt(p.score2);
@@ -235,7 +244,7 @@ function matchCard(match, round) {
 
   return `
   <div class="match-card" id="match-${match.id}">
-    <div class="match-number">Match ${match.matchNum}${match.date ? " &nbsp;·&nbsp; " + match.date : ""}${kickoffBadge}</div>
+    <div class="match-number">Match ${match.matchNum}${match.date ? " &nbsp;·&nbsp; " + match.date : ""}${kickoffBadge}${freebieBadge}</div>
     <div class="match-teams">
       <button class="team-btn ${teamClass("team1")} ${isLocked ? "locked" : ""}"
         ${clickable ? `onclick="pick('${match.id}','team1')"` : "disabled"}
@@ -379,7 +388,9 @@ function calcRoundScore(roundId) {
 }
 
 function calcMatchPoints(roundId, match, pick) {
-  if (!match.result || !pick?.winner) return 0;
+  if (!match.result) return 0;
+  if (match.freebie) return ROUND_POINTS[roundId];
+  if (!pick?.winner) return 0;
   if (pick.winner !== match.result) return 0;
   let pts = ROUND_POINTS[roundId];
   const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);

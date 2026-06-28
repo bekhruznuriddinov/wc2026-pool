@@ -44,6 +44,15 @@ async function initLeaderboard() {
         let rScore = 0;
         Object.entries(matches).forEach(([matchId, match]) => {
           if (match.roundId !== round.id || !match.result) return;
+
+          // Freebie: everyone gets base round points regardless of pick
+          if (match.freebie) {
+            statPicked++;
+            statCorrect++;
+            rScore += ROUND_POINTS[round.id];
+            return;
+          }
+
           const pick = picks[matchId];
           if (!pick) return;
 
