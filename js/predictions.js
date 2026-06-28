@@ -242,7 +242,6 @@ function matchCard(match, round) {
         style="${!clickable ? "cursor:default" : ""}">
         <span class="team-flag">${flag(match.team1)}</span>
         <span class="team-name">${match.team1}</span>
-        ${peers1.length ? `<span class="team-pickers">${pickerLabel(peers1)}</span>` : ""}
       </button>
 
       <div class="score-center">
@@ -270,9 +269,14 @@ function matchCard(match, round) {
         style="${!clickable ? "cursor:default" : ""}">
         <span class="team-flag">${flag(match.team2)}</span>
         <span class="team-name">${match.team2}</span>
-        ${peers2.length ? `<span class="team-pickers">${pickerLabel(peers2)}</span>` : ""}
       </button>
     </div>
+    ${(peers1.length || peers2.length) ? `
+    <div class="picks-social">
+      <span class="picks-social-label">${pickerLabel(peers1)}</span>
+      <span></span>
+      <span class="picks-social-label picks-social-right">${pickerLabel(peers2)}</span>
+    </div>` : ""}
     ${(result || p.winner) ? `
       <div class="match-result">
         ${bonusLabel()}

@@ -343,7 +343,18 @@ select option { background: #fff; color: var(--text); }
 .team-flag .fi { width: 2.2rem; height: 1.65rem; border-radius: 3px; box-shadow: 0 1px 4px rgba(0,0,0,0.35); }
 .fi { vertical-align: middle; border-radius: 2px; }
 .team-name { font-size: 0.82rem; font-weight: 600; line-height: 1.2; }
-.team-pickers { font-size: 0.7rem; color: rgba(255,255,255,0.7); font-weight: 500; margin-top: 4px; line-height: 1.2; }
+.picks-social {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  padding: 0.35rem 0.75rem 0.1rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.picks-social-label {
+  font-size: 0.72rem;
+  color: var(--gold);
+  font-weight: 500;
+}
+.picks-social-right { text-align: right; }
 
 .vs {
   font-size: 0.7rem;
