@@ -2,9 +2,8 @@ name: Update WC 2026 Match Results
 
 on:
   schedule:
-    # Runs at 7:00 AM and 7:00 PM UTC every day
-    # Adjust times if you want earlier/later updates
-    - cron: '0 7,19 * * *'
+    # Runs every hour
+    - cron: '0 * * * *'
   workflow_dispatch:
     # Also allows you to trigger it manually from the GitHub Actions tab
 
