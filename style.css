@@ -343,7 +343,7 @@ select option { background: #fff; color: var(--text); }
 .team-flag .fi { width: 2.2rem; height: 1.65rem; border-radius: 3px; box-shadow: 0 1px 4px rgba(0,0,0,0.35); }
 .fi { vertical-align: middle; border-radius: 2px; }
 .team-name { font-size: 0.82rem; font-weight: 600; line-height: 1.2; }
-.team-pickers { font-size: 0.63rem; color: rgba(255,255,255,0.45); font-weight: 400; margin-top: 3px; line-height: 1.2; }
+.team-pickers { font-size: 0.7rem; color: rgba(255,255,255,0.7); font-weight: 500; margin-top: 4px; line-height: 1.2; }
 
 .vs {
   font-size: 0.7rem;
