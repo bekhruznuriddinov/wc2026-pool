@@ -30,13 +30,12 @@ async function initLeaderboard() {
       const roundScores = {};
 
       rounds.forEach(round => {
-        if (round.status !== "complete") return;
+        if (round.status === "upcoming") return;
         let rScore = 0;
         Object.entries(matches).forEach(([matchId, match]) => {
           if (match.roundId !== round.id) return;
           const pick = picks[matchId];
           if (!match.result || !pick) return;
-          // Support both old string format and new object format
           const winner = typeof pick === "object" ? pick.winner : pick;
           if (winner !== match.result) return;
           let pts = ROUND_POINTS[round.id];
@@ -76,7 +75,7 @@ async function initLeaderboard() {
       return;
     }
 
-    const completedRounds = rounds.filter(r => r.status === "complete");
+    const scoredRounds = rounds.filter(r => r.status !== "upcoming");
 
     document.getElementById("tableWrap").innerHTML = `
       <table class="leaderboard-table">
@@ -84,7 +83,14 @@ async function initLeaderboard() {
           <tr>
             <th style="width:48px">#</th>
             <th>Player</th>
-            ${completedRounds.map(r => `<th style="text-align:center">${r.name.split(" ")[0]}<br><span style="color:var(--text-dim);font-size:0.65rem">${ROUND_POINTS[r.id]}pt ea</span></th>`).join("")}
+            ${scoredRounds.map(r => `
+              <th style="text-align:center">
+                ${r.name.split(" ")[0]}
+                ${r.status === "open" || r.status === "closed"
+                  ? `<span class="badge badge-open" style="font-size:0.55rem;margin-left:3px">live</span>`
+                  : ""}
+                <br><span style="color:var(--text-dim);font-size:0.65rem">${ROUND_POINTS[r.id]}pt ea</span>
+              </th>`).join("")}
             <th style="text-align:right">Total</th>
           </tr>
         </thead>
@@ -101,7 +107,7 @@ async function initLeaderboard() {
                     <span>${u.name}</span>
                   </div>
                 </td>
-                ${completedRounds.map(r => `<td style="text-align:center"><span class="score-chip">${u.roundScores[r.id] || 0}</span></td>`).join("")}
+                ${scoredRounds.map(r => `<td style="text-align:center"><span class="score-chip">${u.roundScores[r.id] || 0}</span></td>`).join("")}
                 <td style="text-align:right"><span class="points-big">${u.totalPoints}</span></td>
               </tr>`;
           }).join("")}
