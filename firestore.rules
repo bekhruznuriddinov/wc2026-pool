@@ -26,9 +26,9 @@ service cloud.firestore {
                        .affectedKeys().hasOnly(['name', 'joinedAt', 'totalPoints']);
     }
 
-    // predictions: anyone with a session can write picks (no Firebase Auth in this app)
+    // predictions: picks + updatedAt timestamp are the only fields written
     match /predictions/{userId} {
-      allow create, update: if request.resource.data.keys().hasOnly(['picks']);
+      allow create, update: if request.resource.data.keys().hasOnly(['picks', 'updatedAt']);
     }
   }
 }
