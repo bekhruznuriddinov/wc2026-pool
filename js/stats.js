@@ -220,13 +220,13 @@ function renderPointsRace(ranked, matches, activeRounds) {
   }
 
   const abbr = name => (name || "?").slice(0, 3).toUpperCase();
-  const labels = decided.map(m => `${abbr(m.team1)}-${abbr(m.team2)}`);
+  const labels = ["Start", ...decided.map(m => `${abbr(m.team1)}-${abbr(m.team2)}`)];
 
   const datasets = ranked.map((u, i) => {
     let cum = 0;
     return {
       label: u.name,
-      data: decided.map(m => { cum += u.matchResults[m.id]?.pts || 0; return cum; }),
+      data: [0, ...decided.map(m => { cum += u.matchResults[m.id]?.pts || 0; return cum; })],
       borderColor: CHART_COLORS[i % CHART_COLORS.length],
       backgroundColor: "transparent",
       tension: 0.2,
@@ -248,7 +248,9 @@ function renderPointsRace(ranked, matches, activeRounds) {
         tooltip: {
           callbacks: {
             title: ctx => {
-              const m = decided[ctx[0].dataIndex];
+              const i = ctx[0].dataIndex;
+              if (i === 0) return "Start";
+              const m = decided[i - 1];
               return `${m.team1} vs ${m.team2}`;
             },
           },

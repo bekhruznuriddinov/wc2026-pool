@@ -26,9 +26,10 @@ service cloud.firestore {
                        .affectedKeys().hasOnly(['name', 'joinedAt', 'totalPoints']);
     }
 
-    // predictions: picks + updatedAt timestamp are the only fields written
+    // predictions: only picks + updatedAt may be written or changed
     match /predictions/{userId} {
-      allow create, update: if request.resource.data.keys().hasOnly(['picks', 'updatedAt']);
+      allow create: if request.resource.data.keys().hasOnly(['picks', 'updatedAt']);
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['picks', 'updatedAt']);
     }
   }
 }

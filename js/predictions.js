@@ -540,13 +540,13 @@ function autoSave() {
       }, { merge: true });
       setSaveStatus("saved");
     } catch (err) {
-      console.error(err);
-      setSaveStatus("error");
+      console.error("Save failed:", err.code, err.message);
+      setSaveStatus("error", err.code || "unknown");
     }
   }, 700);
 }
 
-function setSaveStatus(status) {
+function setSaveStatus(status, detail) {
   const el = document.getElementById("saveStatus");
   if (!el) return;
   clearTimeout(el._t);
@@ -558,7 +558,7 @@ function setSaveStatus(status) {
     el.className = "save-indicator saved";
     el._t = setTimeout(() => { el.textContent = ""; el.className = "save-indicator"; }, 2500);
   } else if (status === "error") {
-    el.textContent = "Failed to save";
+    el.textContent = detail ? `Failed to save (${detail})` : "Failed to save";
     el.className = "save-indicator error";
   } else {
     el.textContent = "";

@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Seed Data — HCAP World Cup 2026</title>
+  <title>Seed Data â€” HCAP World Cup 2026</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -16,14 +16,14 @@
       <div class="logo-divider"></div>
       <span class="logo-label">World Cup 2026</span>
     </a>
-    <a href="admin.html" class="nav-link">← Admin</a>
+    <a href="admin.html" class="nav-link">â† Admin</a>
   </div>
 </nav>
 
 <div class="page" style="max-width:600px">
   <div class="page-header" style="margin-top:1.5rem">
     <h1>Seed tournament data</h1>
-    <p>One-time setup — populates all rounds and matches for the 2026 World Cup knockout stage.</p>
+    <p>One-time setup â€” populates all rounds and matches for the 2026 World Cup knockout stage.</p>
   </div>
 
   <div class="alert alert-warning" style="margin-bottom:1.5rem">
@@ -34,7 +34,7 @@
   <div class="card">
     <h2 style="font-size:1rem;font-weight:600;color:var(--navy);margin-bottom:1rem">What this will create</h2>
     <ul style="font-size:0.875rem;color:var(--text-muted);line-height:2;padding-left:1.25rem">
-      <li>6 rounds (R32 → R16 → QF → SF → 3rd Place → Final)</li>
+      <li>6 rounds (R32 â†’ R16 â†’ QF â†’ SF â†’ 3rd Place â†’ Final)</li>
       <li>16 Round of 32 matches with real teams</li>
       <li>8 Round of 16 slots (bracket pairings from R32)</li>
       <li>4 Quarter-final slots</li>
@@ -48,7 +48,7 @@
 
     <button id="seedBtn" class="btn btn-primary" onclick="runSeed()">Seed tournament data</button>
     <p id="doneMsg" style="display:none;margin-top:1rem;font-weight:600;color:var(--green)">
-      ✓ Done! <a href="admin.html" style="color:var(--green)">Go to admin panel →</a>
+      âœ“ Done! <a href="admin.html" style="color:var(--green)">Go to admin panel â†’</a>
     </p>
   </div>
 </div>
@@ -67,7 +67,7 @@ const SEED_ROUNDS = [
   { id: "final", name: "Final",          order: 6, points: 16, status: "upcoming" },
 ];
 
-// Round of 32 — all 16 confirmed matchups
+// Round of 32 â€” all 16 confirmed matchups
 const R32 = [
   { matchNum: 1,  team1: "South Africa", team2: "Canada",               date: "Jun 28" },
   { matchNum: 2,  team1: "Germany",      team2: "Paraguay",             date: "Jun 29" },
@@ -87,7 +87,7 @@ const R32 = [
   { matchNum: 16, team1: "Australia",    team2: "Egypt",                date: "Jul 3"  },
 ];
 
-// Round of 16 — bracket feeds from R32 match numbers
+// Round of 16 â€” bracket feeds from R32 match numbers
 // label shows which R32 matches feed in
 const R16 = [
   { matchNum: 1, label: "W(M2) vs W(M5)",  feed: "Winner Match 2 vs Winner Match 5",  date: "Jul 4"  },
@@ -100,7 +100,7 @@ const R16 = [
   { matchNum: 8, label: "W(M13) vs W(M15)", feed: "Winner Match 13 vs Winner Match 15", date: "Jul 7" },
 ];
 
-// Quarter-finals — feed from R16 match numbers
+// Quarter-finals â€” feed from R16 match numbers
 const QF = [
   { matchNum: 1, feed: "Winner R16 Match 1 vs Winner R16 Match 2", date: "Jul 9"  },
   { matchNum: 2, feed: "Winner R16 Match 5 vs Winner R16 Match 6", date: "Jul 9"  },
@@ -128,18 +128,18 @@ function log(msg) {
 async function runSeed() {
   const btn = document.getElementById("seedBtn");
   btn.disabled = true;
-  btn.textContent = "Seeding…";
+  btn.textContent = "Seedingâ€¦";
 
   try {
     // 1. Create rounds
-    log("Creating rounds…");
+    log("Creating roundsâ€¦");
     for (const round of SEED_ROUNDS) {
       await db.collection("rounds").doc(round.id).set(round);
-      log(`  ✓ ${round.name}`);
+      log(`  âœ“ ${round.name}`);
     }
 
     // 2. R32 matches
-    log("\nCreating Round of 32 matches…");
+    log("\nCreating Round of 32 matchesâ€¦");
     for (const m of R32) {
       await db.collection("matches").add({
         roundId: "r32", matchNum: m.matchNum,
@@ -147,11 +147,11 @@ async function runSeed() {
         date: m.date, result: null, status: "pending",
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
-      log(`  ✓ M${m.matchNum}: ${m.team1} vs ${m.team2}`);
+      log(`  âœ“ M${m.matchNum}: ${m.team1} vs ${m.team2}`);
     }
 
     // 3. R16 matches (TBD teams, bracket labels stored)
-    log("\nCreating Round of 16 slots…");
+    log("\nCreating Round of 16 slotsâ€¦");
     for (const m of R16) {
       await db.collection("matches").add({
         roundId: "r16", matchNum: m.matchNum,
@@ -160,11 +160,11 @@ async function runSeed() {
         result: null, status: "pending",
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
-      log(`  ✓ R16 M${m.matchNum}: ${m.feed}`);
+      log(`  âœ“ R16 M${m.matchNum}: ${m.feed}`);
     }
 
     // 4. QF slots
-    log("\nCreating Quarter-final slots…");
+    log("\nCreating Quarter-final slotsâ€¦");
     for (const m of QF) {
       await db.collection("matches").add({
         roundId: "qf", matchNum: m.matchNum,
@@ -173,11 +173,11 @@ async function runSeed() {
         result: null, status: "pending",
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
-      log(`  ✓ QF M${m.matchNum}: ${m.feed}`);
+      log(`  âœ“ QF M${m.matchNum}: ${m.feed}`);
     }
 
     // 5. SF slots
-    log("\nCreating Semi-final slots…");
+    log("\nCreating Semi-final slotsâ€¦");
     for (const m of SF) {
       await db.collection("matches").add({
         roundId: "sf", matchNum: m.matchNum,
@@ -186,11 +186,11 @@ async function runSeed() {
         result: null, status: "pending",
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
-      log(`  ✓ SF M${m.matchNum}: ${m.feed}`);
+      log(`  âœ“ SF M${m.matchNum}: ${m.feed}`);
     }
 
     // 6. 3rd place
-    log("\nCreating 3rd Place slot…");
+    log("\nCreating 3rd Place slotâ€¦");
     await db.collection("matches").add({
       roundId: "third", matchNum: 1,
       team1: "TBD", team2: "TBD",
@@ -198,10 +198,10 @@ async function runSeed() {
       result: null, status: "pending",
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    log(`  ✓ 3rd Place: ${THIRD[0].feed}`);
+    log(`  âœ“ 3rd Place: ${THIRD[0].feed}`);
 
     // 7. Final
-    log("\nCreating Final slot…");
+    log("\nCreating Final slotâ€¦");
     await db.collection("matches").add({
       roundId: "final", matchNum: 1,
       team1: "TBD", team2: "TBD",
@@ -209,15 +209,15 @@ async function runSeed() {
       result: null, status: "pending",
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    log(`  ✓ Final: ${FINAL[0].feed}`);
+    log(`  âœ“ Final: ${FINAL[0].feed}`);
 
-    log("\n✓ All done!");
+    log("\nâœ“ All done!");
     document.getElementById("doneMsg").style.display = "block";
     btn.textContent = "Done";
 
   } catch (err) {
     console.error(err);
-    log(`\n✗ Error: ${err.message}`);
+    log(`\nâœ— Error: ${err.message}`);
     btn.disabled = false;
     btn.textContent = "Retry";
   }
