@@ -80,6 +80,21 @@ async function loadRound(roundId, rounds) {
       return a.matchNum - b.matchNum;
     });
 
+  // Dedup: drop TBD placeholders that share a kickoff time with a real match doc.
+  // Happens when the admin pre-created TBD slots and the bot later created a real doc
+  // for the same match instead of updating the placeholder.
+  const realKickoffs = new Set(
+    allMatches
+      .filter(m => m.team1 && m.team1 !== "TBD" && m.kickoff)
+      .map(m => (m.kickoff.toDate ? m.kickoff.toDate() : new Date(m.kickoff)).getTime())
+  );
+  allMatches = allMatches.filter(m => {
+    if (m.team1 && m.team1 !== "TBD") return true;
+    if (!m.kickoff) return true;
+    const ko = (m.kickoff.toDate ? m.kickoff.toDate() : new Date(m.kickoff)).getTime();
+    return !realKickoffs.has(ko);
+  });
+
   document.getElementById("loading").style.display = "none";
   document.getElementById("roundContent").style.display = "block";
   renderRound(round);

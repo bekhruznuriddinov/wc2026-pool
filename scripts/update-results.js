@@ -211,23 +211,63 @@ async function main() {
         bracketChanges++;
       }
     } else {
-      // No existing doc — create one
-      const doc = {
-        roundId,
-        team1: apiHome || "TBD",
-        team2: apiAway || "TBD",
-        apiMatchId,
-        matchNum: m.id,
-        result: null,
-        score1: null,
-        score2: null,
-      };
-      if (m.utcDate) doc.kickoff = new Date(m.utcDate);
-      const newRef = db.collection("matches").doc();
-      batch2.set(newRef, doc);
-      console.log(`[bracket] ${roundId}: created ${doc.team1} vs ${doc.team2}`);
-      bracketChanges++;
-      firestoreMatches.push({ id: newRef.id, ref: newRef, ...doc });
+      // Before creating a new doc, check if there's a TBD placeholder at the same kickoff
+      // (admin may have pre-created placeholders that the team-name lookup missed)
+      let tbdPlaceholder = null;
+      if (m.utcDate) {
+        const apiKoMs = new Date(m.utcDate).getTime();
+        tbdPlaceholder = firestoreMatches.find(
+          (fm) =>
+            fm.roundId === roundId &&
+            !fm.apiMatchId &&
+            (!fm.team1 || fm.team1 === "TBD") &&
+            fm.kickoff &&
+            Math.abs(
+              (fm.kickoff.toDate ? fm.kickoff.toDate() : new Date(fm.kickoff)).getTime() - apiKoMs
+            ) < 60_000
+        );
+      }
+
+      if (tbdPlaceholder) {
+        // Claim the placeholder instead of creating a duplicate
+        const upd = { apiMatchId };
+        if (teamsKnown) { upd.team1 = apiHome; upd.team2 = apiAway; }
+        if (m.utcDate) upd.kickoff = new Date(m.utcDate);
+        if (FINISHED_STATUSES.has(m.status) && !tbdPlaceholder.result && teamsKnown) {
+          const score = m.score?.fullTime;
+          const winner = m.score?.winner;
+          if (score && winner && winner !== "DRAW") {
+            const t1 = upd.team1 || tbdPlaceholder.team1;
+            const homeIsTeam1 = t1 === apiHome;
+            upd.result = winner === "HOME_TEAM" ? (homeIsTeam1 ? "team1" : "team2") : (homeIsTeam1 ? "team2" : "team1");
+            upd.score1 = homeIsTeam1 ? score.home : score.away;
+            upd.score2 = homeIsTeam1 ? score.away : score.home;
+            upd.updatedByBot = true;
+          }
+        }
+        batch2.update(tbdPlaceholder.ref, upd);
+        tbdPlaceholder.apiMatchId = apiMatchId; // prevent re-use within this run
+        console.log(`[bracket] ${roundId}: claimed TBD placeholder → ${teamsKnown ? `${apiHome} vs ${apiAway}` : "TBD"}`);
+        bracketChanges++;
+      } else {
+        // No existing doc — create one
+        const doc = {
+          roundId,
+          team1: apiHome || "TBD",
+          team2: apiAway || "TBD",
+          apiMatchId,
+          matchNum: m.id,
+          result: null,
+          score1: null,
+          score2: null,
+        };
+        if (m.utcDate) doc.kickoff = new Date(m.utcDate);
+        const newRef = db.collection("matches").doc();
+        batch2.set(newRef, doc);
+        console.log(`[bracket] ${roundId}: created ${doc.team1} vs ${doc.team2}`);
+        bracketChanges++;
+        firestoreMatches.push({ id: newRef.id, ref: newRef, ...doc });
+      }
     }
   }
 
