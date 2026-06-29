@@ -55,12 +55,19 @@ async function initAdmin() {
   }
 }
 
+function getRoundMatches(matches, roundId) {
+  const all = Object.values(matches).filter(m => m.roundId === roundId && !m.freebie);
+  const hasApiDoc = all.some(m => m.apiMatchId);
+  const deduped = hasApiDoc
+    ? all.filter(m => m.apiMatchId || (m.team1 && m.team1 !== "TBD"))
+    : all;
+  return deduped.filter(m => m.team1 && m.team1 !== "TBD");
+}
+
 function renderOverview(users, rounds, openRound, matches, predictions, settings) {
   let completionText = "–", completionSub = "No open round";
   if (openRound) {
-    const roundMatches = Object.values(matches).filter(m =>
-      m.roundId === openRound.id && m.team1 && m.team1 !== "TBD" && !m.freebie
-    );
+    const roundMatches = getRoundMatches(matches, openRound.id);
     const totalM = roundMatches.length;
     const done = users.filter(u => {
       const picks = predictions[u.id] || {};
@@ -96,9 +103,7 @@ function renderOverview(users, rounds, openRound, matches, predictions, settings
 }
 
 function renderPicksTracker(users, openRound, matches, predictions) {
-  const roundMatches = Object.values(matches).filter(m =>
-    m.roundId === openRound.id && m.team1 && m.team1 !== "TBD" && !m.freebie
-  );
+  const roundMatches = getRoundMatches(matches, openRound.id);
   const totalM = roundMatches.length;
 
   const rows = users.map(u => {
