@@ -852,7 +852,8 @@ details summary:hover { color: var(--text); }
 }
 .cf-win  { background: var(--green); }
 .cf-lose { background: var(--text-dim); }
-.cf-open { background: var(--navy-3); }
+.cf-t1   { background: var(--navy-3); }
+.cf-t2   { background: var(--border-strong); color: var(--text-muted); }
 .consensus-meta {
   font-size: 0.7rem;
   color: var(--text-dim);

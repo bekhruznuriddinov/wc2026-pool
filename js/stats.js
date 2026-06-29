@@ -228,10 +228,10 @@ function renderConsensus(matches, rounds, pickCounts) {
           <div class="consensus-bar-wrap">
             <div class="consensus-team ${t1won ? "ct-won" : match.result ? "ct-lost" : ""}">${match.team1}</div>
             <div class="consensus-track">
-              <div class="consensus-fill ${t1won ? "cf-win" : match.result ? "cf-lose" : "cf-open"}" style="width:${pct1}%">
+              <div class="consensus-fill ${t1won ? "cf-win" : match.result ? "cf-lose" : "cf-t1"}" style="width:${pct1}%">
                 ${pct1 >= 18 ? `<span>${pct1}%</span>` : ""}
               </div>
-              <div class="consensus-fill ${t2won ? "cf-win" : match.result ? "cf-lose" : "cf-open"}" style="width:${pct2}%;justify-content:flex-end">
+              <div class="consensus-fill ${t2won ? "cf-win" : match.result ? "cf-lose" : "cf-t2"}" style="width:${pct2}%;justify-content:flex-end">
                 ${pct2 >= 18 ? `<span>${pct2}%</span>` : ""}
               </div>
             </div>
