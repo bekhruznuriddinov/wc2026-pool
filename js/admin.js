@@ -56,12 +56,21 @@ async function initAdmin() {
 }
 
 function getRoundMatches(matches, roundId) {
-  const all = Object.values(matches).filter(m => m.roundId === roundId && !m.freebie);
-  const hasApiDoc = all.some(m => m.apiMatchId);
+  const all = Object.values(matches).filter(m => m.roundId === roundId);
+  const nonFree = all.filter(m => !m.freebie);
+  const hasApiDoc = nonFree.some(m => m.apiMatchId);
   const deduped = hasApiDoc
-    ? all.filter(m => m.apiMatchId || (m.team1 && m.team1 !== "TBD"))
-    : all;
-  return deduped.filter(m => m.team1 && m.team1 !== "TBD");
+    ? nonFree.filter(m => m.apiMatchId || (m.team1 && m.team1 !== "TBD"))
+    : nonFree;
+  const pickable = deduped.filter(m => m.team1 && m.team1 !== "TBD");
+  const freebies = all.filter(m => m.freebie && m.team1 && m.team1 !== "TBD");
+  return [...pickable, ...freebies];
+}
+
+function hasPick(m, picks) {
+  if (m.freebie) return true; // freebies are auto-picked for everyone
+  const p = picks[m.id];
+  return !!(p && (typeof p === "string" ? p : p.winner));
 }
 
 function renderOverview(users, rounds, openRound, matches, predictions, settings) {
@@ -71,10 +80,7 @@ function renderOverview(users, rounds, openRound, matches, predictions, settings
     const totalM = roundMatches.length;
     const done = users.filter(u => {
       const picks = predictions[u.id] || {};
-      return totalM > 0 && roundMatches.every(m => {
-        const p = picks[m.id];
-        return p && (typeof p === "string" ? p : p.winner);
-      });
+      return totalM > 0 && roundMatches.every(m => hasPick(m, picks));
     }).length;
     completionText = `${done}/${users.length}`;
     completionSub  = `players done — ${totalM} match${totalM !== 1 ? "es" : ""}`;
@@ -108,10 +114,7 @@ function renderPicksTracker(users, openRound, matches, predictions) {
 
   const rows = users.map(u => {
     const picks = predictions[u.id] || {};
-    const made = roundMatches.filter(m => {
-      const p = picks[m.id];
-      return p && (typeof p === "string" ? p : p.winner);
-    }).length;
+    const made = roundMatches.filter(m => hasPick(m, picks)).length;
     return { ...u, made, done: made === totalM && totalM > 0 };
   }).sort((a, b) => {
     if (a.done !== b.done) return a.done ? 1 : -1; // incomplete first
