@@ -156,7 +156,7 @@ function renderRound(round) {
         <div style="margin-top:0.4rem;font-size:0.8rem;color:var(--text-muted)">
           Maverick: <strong style="color:#7F77DD">+1</strong> if you picked against the majority and won.
           Bonuses stack. Wrong score prediction deducts <strong style="color:var(--red)">−1</strong> (correct winner only, never goes negative).
-          Penalty shootouts: the winning team gets <strong>+1 goal</strong> added for scoring purposes — so a 1–1 pens result is treated as 2–1 (1-goal margin).
+          Penalty shootouts: the winning team gets <strong>+1 goal</strong> for scoring purposes (e.g. 1–1 pens = 2–1). If you predicted a draw score with the correct winner, it counts the same way — so predicting 1–1 or 2–1 for a 1–1 pens match both earn exact-score points.
         </div>
       </div>
     </details>` : "";
@@ -580,13 +580,16 @@ function calcMatchPoints(roundId, match, pick, pickCounts) {
   if (correctWin && isMaverick(match.id, pick.winner, pickCounts)) pts += 1;
   const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);
   let a1 = parseInt(match.score1), a2 = parseInt(match.score2);
-  // Penalty shootout: treat pen winner as scoring +1 goal (e.g. 1-1 pens compared as 2-1)
-  if (!isNaN(a1) && !isNaN(a2) && a1 === a2 && match.result) {
-    if (match.result === "team1") a1++; else a2++;
+  const isPens = !isNaN(a1) && !isNaN(a2) && a1 === a2 && !!match.result;
+  if (isPens) { if (match.result === "team1") a1++; else a2++; }
+  // If pen match, also treat a draw pick as winner+1 (e.g. picking 1-1 = same as 2-1)
+  let ps1 = s1, ps2 = s2;
+  if (isPens && !isNaN(ps1) && !isNaN(ps2) && ps1 === ps2 && pick.winner) {
+    if (pick.winner === "team1") ps1++; else ps2++;
   }
-  if (!isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
-    if (s1 === a1 && s2 === a2) { if (correctWin) pts += 6; } // +5 exact +1 margin
-    else if ((s1 - s2) === (a1 - a2)) { if (correctWin) pts += 1; }
+  if (!isNaN(ps1) && !isNaN(ps2) && !isNaN(a1) && !isNaN(a2)) {
+    if (ps1 === a1 && ps2 === a2) { if (correctWin) pts += 6; } // +5 exact +1 margin
+    else if ((ps1 - ps2) === (a1 - a2)) { if (correctWin) pts += 1; }
     else if (correctWin) pts -= 1; // penalty only neutralises a winner pick, never goes negative
   }
   return pts;

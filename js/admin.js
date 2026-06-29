@@ -182,12 +182,15 @@ function renderPlayerList(users, rounds, matches, predictions, pickCounts) {
         if (typeof pick === "object") {
           const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);
           let a1 = parseInt(match.score1), a2 = parseInt(match.score2);
-          if (!isNaN(a1) && !isNaN(a2) && a1 === a2 && match.result) {
-            if (match.result === "team1") a1++; else a2++;
+          const isPens = !isNaN(a1) && !isNaN(a2) && a1 === a2 && !!match.result;
+          if (isPens) { if (match.result === "team1") a1++; else a2++; }
+          let ps1 = s1, ps2 = s2;
+          if (isPens && !isNaN(ps1) && !isNaN(ps2) && ps1 === ps2 && winner) {
+            if (winner === "team1") ps1++; else ps2++;
           }
-          if (!isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
-            if (s1 === a1 && s2 === a2) pts += 6;
-            else if ((s1 - s2) === (a1 - a2)) pts += 1;
+          if (!isNaN(ps1) && !isNaN(ps2) && !isNaN(a1) && !isNaN(a2)) {
+            if (ps1 === a1 && ps2 === a2) pts += 6;
+            else if ((ps1 - ps2) === (a1 - a2)) pts += 1;
             else pts -= 1;
           }
         }
@@ -283,7 +286,11 @@ function renderPicksMatrix(users, rounds, matches, predictions) {
         let color = "inherit", icon = "";
         if (match.result) {
           if (winner === match.result) {
-            const exact = !isNaN(s1) && !isNaN(s2) && s1 === adjA1 && s2 === adjA2;
+            let ps1 = s1, ps2 = s2;
+            if (isPens && !isNaN(ps1) && !isNaN(ps2) && ps1 === ps2 && winner) {
+              if (winner === "team1") ps1++; else ps2++;
+            }
+            const exact = !isNaN(ps1) && !isNaN(ps2) && ps1 === adjA1 && ps2 === adjA2;
             color = "var(--green)";
             icon = exact ? "★ " : "✓ ";
           } else {
