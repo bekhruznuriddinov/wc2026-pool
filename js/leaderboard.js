@@ -24,10 +24,10 @@ async function initLeaderboard() {
     const predictions = {};
     predsSnap.docs.forEach(d => { predictions[d.id] = d.data(); });
 
-    // Total decided matches across all active rounds (freebies always count)
-    const totalDecided = Object.values(matches).filter(m => {
+    // Total real matches in active rounds (denominator for stats columns)
+    const totalMatches = Object.values(matches).filter(m => {
       const round = rounds.find(r => r.id === m.roundId);
-      return round && round.status !== "upcoming" && (m.result || m.freebie);
+      return round && round.status !== "upcoming" && m.team1 && m.team1 !== "TBD";
     }).length;
 
     // Calculate scores for each user
@@ -146,10 +146,10 @@ async function initLeaderboard() {
                   </div>
                 </td>
                 ${scoredRounds.map(r => `<td style="text-align:center"><span class="score-chip">${u.roundScores[r.id] || 0}</span></td>`).join("")}
-                <td style="text-align:center" class="stat-cell">${u.statPicked}/${totalDecided}</td>
-                <td style="text-align:center" class="stat-cell">${u.statCorrect}/${totalDecided}</td>
-                <td style="text-align:center" class="stat-cell">${u.statMargin}/${totalDecided}</td>
-                <td style="text-align:center" class="stat-cell">${u.statExact}/${totalDecided}</td>
+                <td style="text-align:center" class="stat-cell">${u.statPicked}/${totalMatches}</td>
+                <td style="text-align:center" class="stat-cell">${u.statCorrect}/${totalMatches}</td>
+                <td style="text-align:center" class="stat-cell">${u.statMargin}/${totalMatches}</td>
+                <td style="text-align:center" class="stat-cell">${u.statExact}/${totalMatches}</td>
                 <td style="text-align:right"><span class="points-big">${u.totalPoints}</span></td>
               </tr>`;
           }).join("")}
