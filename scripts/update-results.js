@@ -93,7 +93,11 @@ async function main() {
         (fm.team1 === apiHome && fm.team2 === apiAway) ||
         (fm.team1 === apiAway && fm.team2 === apiHome)
     );
-    if (!fsMatch) continue;
+    if (!fsMatch) {
+      if (FINISHED_STATUSES.has(m.status))
+        console.log(`  [NO MATCH] ${apiHome} vs ${apiAway} — FINISHED in API but no Firestore doc found`);
+      continue;
+    }
 
     const updates = {};
 
@@ -112,6 +116,8 @@ async function main() {
     if (FINISHED_STATUSES.has(m.status) && !fsMatch.result) {
       const score = m.score?.fullTime;
       const winner = m.score?.winner;
+      if (!score || !winner || winner === "DRAW")
+        console.log(`  [SKIP] ${fsMatch.team1} vs ${fsMatch.team2} — status=${m.status} winner=${winner} score=${JSON.stringify(score)}`);
       if (score && winner && winner !== "DRAW") {
         const homeIsTeam1 = fsMatch.team1 === apiHome;
         updates.result   = winner === "HOME_TEAM" ? (homeIsTeam1 ? "team1" : "team2") : (homeIsTeam1 ? "team2" : "team1");
