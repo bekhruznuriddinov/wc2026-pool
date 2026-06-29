@@ -38,8 +38,6 @@ body {
 }
 
 .topnav-inner {
-  max-width: 1100px;
-  margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
