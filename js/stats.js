@@ -14,7 +14,10 @@ function calcPts(roundId, match, pick, pickCounts) {
   let pts = correctWin ? ROUND_POINTS[roundId] : 0;
   if (correctWin && isMaverick(match.id, pick.winner, pickCounts)) pts += 1;
   const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);
-  const a1 = parseInt(match.score1), a2 = parseInt(match.score2);
+  let a1 = parseInt(match.score1), a2 = parseInt(match.score2);
+  if (!isNaN(a1) && !isNaN(a2) && a1 === a2 && match.result) {
+    if (match.result === "team1") a1++; else a2++;
+  }
   if (!isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
     if (s1 === a1 && s2 === a2) { if (correctWin) pts += 6; }
     else if ((s1 - s2) === (a1 - a2)) { if (correctWin) pts += 1; }
@@ -26,7 +29,10 @@ function calcPts(roundId, match, pick, pickCounts) {
 function isExact(match, pick) {
   if (!match.result || !pick?.winner || pick.winner !== match.result) return false;
   const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);
-  const a1 = parseInt(match.score1), a2 = parseInt(match.score2);
+  let a1 = parseInt(match.score1), a2 = parseInt(match.score2);
+  if (!isNaN(a1) && !isNaN(a2) && a1 === a2 && match.result) {
+    if (match.result === "team1") a1++; else a2++;
+  }
   return !isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2) && s1 === a1 && s2 === a2;
 }
 

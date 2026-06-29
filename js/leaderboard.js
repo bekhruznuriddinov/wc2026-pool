@@ -84,7 +84,10 @@ async function initLeaderboard() {
 
           if (typeof pick === "object" && pick.score1 !== null && pick.score2 !== null) {
             const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);
-            const a1 = parseInt(match.score1), a2 = parseInt(match.score2);
+            let a1 = parseInt(match.score1), a2 = parseInt(match.score2);
+            if (!isNaN(a1) && !isNaN(a2) && a1 === a2 && match.result) {
+              if (match.result === "team1") a1++; else a2++;
+            }
             if (!isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
               if (s1 === a1 && s2 === a2) {
                 if (correctWin) { statExact++; statMargin++; pts += 6; } // +5 exact +1 margin
