@@ -130,8 +130,8 @@ async function initStats() {
 function renderSpotlight(ranked, matches, pickCounts) {
   const decidedMatches = Object.values(matches).filter(m => m.result);
 
-  // Biggest upset
-  let upset = null, lowestPct = 1;
+  // Biggest upset — winner must have been a minority pick (< 50%)
+  let upset = null, lowestPct = 0.5;
   decidedMatches.forEach(m => {
     const c = pickCounts[m.id];
     if (!c) return;
@@ -141,12 +141,20 @@ function renderSpotlight(ranked, matches, pickCounts) {
     if (pct < lowestPct) { lowestPct = pct; upset = { m, total, correct: c[m.result] || 0 }; }
   });
 
-  const guru     = [...ranked].filter(u => u.statExact > 0).sort((a,b) => b.statExact - a.statExact)[0];
-  const maverick = [...ranked].filter(u => u.statContrarian > 0).sort((a,b) => b.statContrarian - a.statContrarian)[0];
+  const formatNames = players =>
+    players.length <= 3 ? players.map(u => u.name.split(" ")[0]).join(", ") : `${players.length} players`;
 
-  // Leader — handle ties
-  const topScore  = ranked.length ? ranked[0].totalPoints : 0;
-  const leaders   = ranked.filter(u => u.totalPoints === topScore && topScore > 0);
+  // Score guru — all tied
+  const maxExact = ranked.reduce((max, u) => Math.max(max, u.statExact), 0);
+  const gurus = maxExact > 0 ? ranked.filter(u => u.statExact === maxExact) : [];
+
+  // Maverick — all tied
+  const maxContrarian = ranked.reduce((max, u) => Math.max(max, u.statContrarian), 0);
+  const mavericks = maxContrarian > 0 ? ranked.filter(u => u.statContrarian === maxContrarian) : [];
+
+  // Leader — all tied
+  const topScore = ranked.length ? ranked[0].totalPoints : 0;
+  const leaders  = ranked.filter(u => u.totalPoints === topScore && topScore > 0);
   let leaderValue, leaderSub;
   if (!leaders.length) {
     leaderValue = `<div class="spotlight-value spotlight-empty">–</div>`;
@@ -155,10 +163,7 @@ function renderSpotlight(ranked, matches, pickCounts) {
     leaderValue = `<div class="spotlight-value" style="color:var(--green)">${leaders[0].name}</div>`;
     leaderSub   = `${topScore} pts`;
   } else {
-    const names = leaders.length <= 3
-      ? leaders.map(u => u.name.split(" ")[0]).join(", ")
-      : `${leaders.length} players`;
-    leaderValue = `<div class="spotlight-value" style="font-size:0.9rem;color:var(--green)">${names}</div>`;
+    leaderValue = `<div class="spotlight-value" style="font-size:0.9rem;color:var(--green)">${formatNames(leaders)}</div>`;
     leaderSub   = `Tied at ${topScore} pts`;
   }
 
@@ -175,20 +180,21 @@ function renderSpotlight(ranked, matches, pickCounts) {
         `Only ${upset.correct}/${upset.total} called it (${Math.round(lowestPct*100)}%)`)
     : card("Biggest upset",
         `<div class="spotlight-value spotlight-empty">–</div>`,
-        "Updates after first results");
+        "No minority winner yet");
 
-  const guruCard = guru
+  const sz = n => n > 1 ? "font-size:0.9rem;" : "";
+  const guruCard = gurus.length
     ? card("Score guru",
-        `<div class="spotlight-value" style="color:var(--gold)">${guru.name}</div>`,
-        `${guru.statExact} exact score${guru.statExact !== 1 ? "s" : ""}`)
+        `<div class="spotlight-value" style="${sz(gurus.length)}color:var(--gold)">${formatNames(gurus)}</div>`,
+        `${maxExact} exact score${maxExact !== 1 ? "s" : ""}`)
     : card("Score guru",
         `<div class="spotlight-value spotlight-empty">–</div>`,
         "Most exact score predictions");
 
-  const maverickCard = maverick
+  const maverickCard = mavericks.length
     ? card("Maverick",
-        `<div class="spotlight-value" style="color:#7F77DD">${maverick.name}</div>`,
-        `${maverick.statContrarian} minority pick${maverick.statContrarian !== 1 ? "s" : ""}`)
+        `<div class="spotlight-value" style="${sz(mavericks.length)}color:#7F77DD">${formatNames(mavericks)}</div>`,
+        `${maxContrarian} minority pick${maxContrarian !== 1 ? "s" : ""}`)
     : card("Maverick",
         `<div class="spotlight-value spotlight-empty">–</div>`,
         "Most picks against the crowd");
