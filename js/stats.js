@@ -274,7 +274,11 @@ function renderConsensus(matches, rounds, pickCounts) {
   activeRounds.forEach(round => {
     const roundMatches = Object.values(matches)
       .filter(m => m.roundId === round.id && m.team1 && m.team1 !== "TBD" && !m.freebie && (m.result || pickCounts[m.id]))
-      .sort((a, b) => (a.matchNum || 0) - (b.matchNum || 0));
+      .sort((a, b) => {
+        const ta = a.kickoff ? (a.kickoff.toDate ? a.kickoff.toDate() : new Date(a.kickoff)).getTime() : 0;
+        const tb = b.kickoff ? (b.kickoff.toDate ? b.kickoff.toDate() : new Date(b.kickoff)).getTime() : 0;
+        return ta - tb || (a.matchNum || 0) - (b.matchNum || 0);
+      });
     if (!roundMatches.length) return;
 
     html += `<div class="consensus-round-label">${round.name}</div>`;
