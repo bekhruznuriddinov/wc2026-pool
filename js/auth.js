@@ -33,15 +33,21 @@ function renderUserBar(user) {
   const el = document.getElementById("userBar");
   if (!el || !user) return;
   el.style.cssText = "display:flex;align-items:center;gap:0.75rem;";
-  const adminLink = user.email === ADMIN_EMAIL
-    ? `<a href="admin.html" class="nav-link">⚙️ Admin</a>`
-    : "";
+  if (user.email === ADMIN_EMAIL) {
+    const navLinks = document.querySelector(".topnav-links");
+    if (navLinks && !navLinks.querySelector(".admin-nav-link")) {
+      const a = document.createElement("a");
+      a.href = "admin.html";
+      a.className = "nav-link admin-nav-link" + (location.pathname.endsWith("admin.html") ? " active" : "");
+      a.textContent = "⚙️ Admin";
+      navLinks.appendChild(a);
+    }
+  }
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:8px">
       <div class="user-avatar">${initials(user.name)}</div>
       <span class="user-name" style="color:rgba(255,255,255,0.75);font-size:0.82rem;white-space:nowrap">${user.name}</span>
     </div>
-    ${adminLink}
     <button class="nav-link" style="background:none;border:none;cursor:pointer;font-family:inherit" onclick="logout()">🚪 Sign out</button>
   `;
 }
