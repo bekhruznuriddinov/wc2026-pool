@@ -188,10 +188,11 @@ async function loadPeerPicks() {
       const name = isSelf ? user.name : names[doc.id];
       if (!name) return;
       Object.entries(doc.data().picks || {}).forEach(([matchId, pick]) => {
-        const winner = (pick && typeof pick === "object") ? pick.winner : pick;
+        const pickObj = (pick && typeof pick === "object") ? pick : { winner: pick };
+        const winner = pickObj.winner;
         if (winner !== "team1" && winner !== "team2") return;
         if (!allPlayerPicks[matchId]) allPlayerPicks[matchId] = { team1: [], team2: [] };
-        allPlayerPicks[matchId][winner].push({ name, isSelf });
+        allPlayerPicks[matchId][winner].push({ name, isSelf, pick: pickObj });
         if (!isSelf) {
           if (!peerPicks[matchId]) peerPicks[matchId] = { team1: [], team2: [] };
           peerPicks[matchId][winner].push(name);
@@ -409,10 +410,16 @@ function groupMatchCard(match, round) {
     if (!pickers.length) return `<div class="gpick-name" style="color:var(--text-dim);font-style:italic">no picks yet</div>`;
     const won = result === side;
     const lost = result && result !== side;
-    return pickers.map(p => `
+    return pickers.map(p => {
+      const pts = result ? calcMatchPoints(round.id, match, p.pick) : null;
+      const ptsChip = pts !== null
+        ? `<span class="gpick-pts ${pts > 0 ? 'gpick-pts-pos' : pts < 0 ? 'gpick-pts-neg' : 'gpick-pts-zero'}">${pts > 0 ? '+' : ''}${pts}</span>`
+        : '';
+      return `
       <div class="gpick-name ${p.isSelf ? 'gpick-self' : ''} ${won ? 'gpick-correct' : lost ? 'gpick-wrong' : ''}">
-        ${p.name}${p.isSelf ? ' (you)' : ''}
-      </div>`).join("");
+        <span>${p.name}${p.isSelf ? ' (you)' : ''}</span>${ptsChip}
+      </div>`;
+    }).join("");
   }
 
   const t1won = result === "team1";
