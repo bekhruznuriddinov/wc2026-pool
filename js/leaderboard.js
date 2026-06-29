@@ -24,6 +24,17 @@ async function initLeaderboard() {
     const predictions = {};
     predsSnap.docs.forEach(d => { predictions[d.id] = d.data(); });
 
+    // Pick counts per match — needed for maverick bonus
+    const pickCounts = {};
+    predsSnap.docs.forEach(doc => {
+      Object.entries(doc.data().picks || {}).forEach(([matchId, pick]) => {
+        const winner = typeof pick === "object" ? pick.winner : pick;
+        if (winner !== "team1" && winner !== "team2") return;
+        if (!pickCounts[matchId]) pickCounts[matchId] = { team1: 0, team2: 0 };
+        pickCounts[matchId][winner]++;
+      });
+    });
+
     // Total real matches in active rounds (denominator for stats columns)
     const totalMatches = Object.values(matches).filter(m => {
       const round = rounds.find(r => r.id === m.roundId);
@@ -67,6 +78,8 @@ async function initLeaderboard() {
           if (correctWin) statCorrect++;
 
           let pts = correctWin ? ROUND_POINTS[round.id] : 0;
+
+          if (correctWin && isMaverick(matchId, winner, pickCounts)) pts += 1;
 
           if (typeof pick === "object" && pick.score1 !== null && pick.score2 !== null) {
             const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);

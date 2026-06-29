@@ -149,12 +149,15 @@ function renderRound(round) {
           <span class="chain-arrow">→</span>
           <span><strong style="color:var(--green)">+5</strong> exact score</span>
           <span class="chain-arrow">=</span>
-          <strong>${maxMatchPts} pts max per match</strong>
+          <strong>${maxMatchPts - 1} pts max per match</strong>
         </div>
         <div style="margin-top:0.4rem;font-size:0.8rem;color:var(--text-muted)">
           Bonuses stack — nail the exact score and you earn all three.
           If you predict a score and get it wrong, <strong style="color:var(--red)">−1 pt</strong> is deducted —
           but only if you picked the correct winner, so you can never score negative on a single match.
+        </div>
+        <div style="margin-top:0.3rem;font-size:0.8rem;color:var(--text-muted)">
+          <strong style="color:#7F77DD">+1 maverick bonus</strong> if you picked against the majority and won.
         </div>
       </div>
     </details>` : "";
@@ -281,16 +284,19 @@ function matchCard(match, round) {
     const s1 = parseInt(p.score1), s2 = parseInt(p.score2);
     const correctWinner = p.winner === result;
     let earned = correctWinner ? pts : 0;
-    let bonusNote = "";
+    const notes = [];
+    const pc = getPickCounts();
+    if (correctWinner && isMaverick(match.id, p.winner, pc)) { earned += 1; notes.push("+1 maverick"); }
     if (!isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
-      if (s1 === a1 && s2 === a2) { if (correctWinner) { earned += 6; bonusNote = " +5 exact +1 margin!"; } }
-      else if ((s1 - s2) === (a1 - a2)) { if (correctWinner) { earned += 1; bonusNote = " +1 correct margin"; } }
-      else if (correctWinner) { earned -= 1; bonusNote = " −1 wrong score"; }
+      if (s1 === a1 && s2 === a2) { if (correctWinner) { earned += 6; notes.push("+5 exact +1 margin!"); } }
+      else if ((s1 - s2) === (a1 - a2)) { if (correctWinner) { earned += 1; notes.push("+1 correct margin"); } }
+      else if (correctWinner) { earned -= 1; notes.push("−1 wrong score"); }
     }
     const color = correctWinner ? "text-green" : "text-red";
     const icon = correctWinner ? "✓" : "✗";
     const scoreStr = (!isNaN(a1) && !isNaN(a2)) ? ` (${a1}–${a2})` : "";
-    return `<span class="${color}">${icon} ${earned} pt${earned !== 1 ? "s" : ""}${scoreStr}${bonusNote}</span>`;
+    const noteStr = notes.length ? " " + notes.join(" ") : "";
+    return `<span class="${color}">${icon} ${earned} pt${earned !== 1 ? "s" : ""}${scoreStr}${noteStr}</span>`;
   }
 
   // Show predicted score in locked/complete state
@@ -305,12 +311,12 @@ function matchCard(match, round) {
   const peers2 = peerPicks[match.id]?.team2 || [];
 
   // Pts chip — top-right of card
-  const maxPts = ROUND_POINTS[round.id] + 6;
+  const maxPts = ROUND_POINTS[round.id] + 7; // +1 maverick +1 margin +5 exact
   let ptsChip;
   if (match.freebie) {
     ptsChip = `<span class="match-pts-chip match-pts-free">FREE</span>`;
   } else if (result) {
-    const earned = calcMatchPoints(round.id, match, p.winner ? p : null);
+    const earned = calcMatchPoints(round.id, match, p.winner ? p : null, getPickCounts());
     const cls = earned > 0 ? "match-pts-earned" : earned < 0 ? "match-pts-neg" : "match-pts-zero";
     ptsChip = `<span class="match-pts-chip ${cls}">${earned} / ${maxPts} pts</span>`;
   } else {
@@ -421,7 +427,7 @@ function groupMatchCard(match, round) {
     const won = result === side;
     const lost = result && result !== side;
     return pickers.map(p => {
-      const pts = result ? calcMatchPoints(round.id, match, p.pick) : null;
+      const pts = result ? calcMatchPoints(round.id, match, p.pick, getPickCounts()) : null;
       const ptsChip = pts !== null
         ? `<span class="gpick-pts ${pts > 0 ? 'gpick-pts-pos' : 'gpick-pts-zero'}">${pts > 0 ? '+' : ''}${pts}</span>`
         : '';
@@ -562,15 +568,17 @@ function setSaveStatus(status) {
 }
 
 function calcRoundScore(roundId) {
-  return allMatches.reduce((sum, m) => sum + calcMatchPoints(roundId, m, myPicks[m.id]), 0);
+  const pc = getPickCounts();
+  return allMatches.reduce((sum, m) => sum + calcMatchPoints(roundId, m, myPicks[m.id], pc), 0);
 }
 
-function calcMatchPoints(roundId, match, pick) {
+function calcMatchPoints(roundId, match, pick, pickCounts) {
   if (!match.result) return 0;
   if (match.freebie) return ROUND_POINTS[roundId];
   if (!pick?.winner) return 0;
   const correctWin = pick.winner === match.result;
   let pts = correctWin ? ROUND_POINTS[roundId] : 0;
+  if (correctWin && isMaverick(match.id, pick.winner, pickCounts)) pts += 1;
   const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);
   const a1 = parseInt(match.score1), a2 = parseInt(match.score2);
   if (!isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
@@ -579,6 +587,14 @@ function calcMatchPoints(roundId, match, pick) {
     else if (correctWin) pts -= 1; // penalty only neutralises a winner pick, never goes negative
   }
   return pts;
+}
+
+function getPickCounts() {
+  const counts = {};
+  Object.entries(allPlayerPicks).forEach(([matchId, sides]) => {
+    counts[matchId] = { team1: sides.team1.length, team2: sides.team2.length };
+  });
+  return counts;
 }
 
 function showToast(msg, type = "info") {

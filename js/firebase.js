@@ -47,6 +47,16 @@ const ROUND_POINTS = {
   third: 4
 };
 
+// Returns true when the given side was the minority pick and can earn the maverick +1 bonus.
+// Requires at least 2 total picks; strictly fewer than half chose this side.
+function isMaverick(matchId, side, pickCounts) {
+  const c = pickCounts && pickCounts[matchId];
+  if (!c) return false;
+  const total = (c.team1 || 0) + (c.team2 || 0);
+  if (total < 2) return false;
+  return (c[side] || 0) < total / 2;
+}
+
 // Round display names and order
 const ROUNDS = [
   { id: "r32",   name: "Round of 32",    order: 1 },

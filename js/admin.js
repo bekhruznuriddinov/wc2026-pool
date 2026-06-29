@@ -29,6 +29,16 @@ async function initAdmin() {
     const predictions = {};
     predsSnap.docs.forEach(d => { predictions[d.id] = d.data().picks || {}; });
 
+    const pickCounts = {};
+    predsSnap.docs.forEach(doc => {
+      Object.entries(doc.data().picks || {}).forEach(([matchId, pick]) => {
+        const winner = typeof pick === "object" ? pick.winner : pick;
+        if (winner !== "team1" && winner !== "team2") return;
+        if (!pickCounts[matchId]) pickCounts[matchId] = { team1: 0, team2: 0 };
+        pickCounts[matchId][winner]++;
+      });
+    });
+
     const openRound = rounds.find(r => r.status === "open");
 
     document.getElementById("loading").style.display = "none";
@@ -36,7 +46,7 @@ async function initAdmin() {
 
     renderOverview(users, rounds, openRound, matches, predictions, settings);
     if (openRound) renderPicksTracker(users, openRound, matches, predictions);
-    renderPlayerList(users, rounds, matches, predictions);
+    renderPlayerList(users, rounds, matches, predictions, pickCounts);
   } catch (err) {
     console.error(err);
     document.getElementById("loading").innerHTML =
@@ -144,7 +154,7 @@ function renderPicksTracker(users, openRound, matches, predictions) {
     </tbody>`;
 }
 
-function renderPlayerList(users, rounds, matches, predictions) {
+function renderPlayerList(users, rounds, matches, predictions, pickCounts) {
   if (!users.length) {
     document.getElementById("playersTable").innerHTML =
       `<tr><td colspan="5"><div class="empty-state"><div class="icon">👥</div><h3>No players yet</h3></div></td></tr>`;
@@ -167,6 +177,7 @@ function renderPlayerList(users, rounds, matches, predictions) {
         const winner = typeof pick === "object" ? pick.winner : pick;
         if (winner !== match.result) return;
         let pts = ROUND_POINTS[round.id];
+        if (isMaverick(match.id, winner, pickCounts)) pts += 1;
         if (typeof pick === "object") {
           const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);
           const a1 = parseInt(match.score1), a2 = parseInt(match.score2);

@@ -6,12 +6,13 @@ const CHART_COLORS = [
   "#BA7517","#639922","#E24B4A","#185FA5","#0F6E56",
 ];
 
-function calcPts(roundId, match, pick) {
+function calcPts(roundId, match, pick, pickCounts) {
   if (!match.result) return null;
   if (match.freebie) return ROUND_POINTS[roundId];
   if (!pick?.winner) return 0;
   const correctWin = pick.winner === match.result;
   let pts = correctWin ? ROUND_POINTS[roundId] : 0;
+  if (correctWin && isMaverick(match.id, pick.winner, pickCounts)) pts += 1;
   const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);
   const a1 = parseInt(match.score1), a2 = parseInt(match.score2);
   if (!isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
@@ -71,7 +72,7 @@ async function initStats() {
         Object.values(matches).forEach(match => {
           if (match.roundId !== round.id) return;
           const pick = match.freebie ? { winner: match.result } : (picks[match.id] || null);
-          const pts = calcPts(round.id, match, pick);
+          const pts = calcPts(round.id, match, pick, pickCounts);
           if (pts === null) return;
           rScore += pts;
           const correct = match.freebie || pick?.winner === match.result;
