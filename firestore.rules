@@ -1,0 +1,34 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Everyone can read all pool data (picks, results, leaderboard)
+    match /{document=**} {
+      allow read: if true;
+    }
+
+    // matches + rounds: web clients cannot write
+    // The GitHub Actions bot uses the Admin SDK which bypasses these rules
+    match /matches/{matchId} {
+      allow write: if false;
+    }
+    match /rounds/{roundId} {
+      allow write: if false;
+    }
+
+    // users: allow join (create) and name update only
+    match /users/{userId} {
+      allow create: if request.resource.data.name is string
+                    && request.resource.data.email is string
+                    && request.resource.data.name.size() > 0
+                    && request.resource.data.email.size() > 0;
+      allow update: if request.resource.data.diff(resource.data)
+                       .affectedKeys().hasOnly(['name', 'joinedAt', 'totalPoints']);
+    }
+
+    // predictions: anyone with a session can write picks (no Firebase Auth in this app)
+    match /predictions/{userId} {
+      allow create, update: if request.resource.data.keys().hasOnly(['picks']);
+    }
+  }
+}
