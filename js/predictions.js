@@ -413,7 +413,7 @@ function groupMatchCard(match, round) {
     return pickers.map(p => {
       const pts = result ? calcMatchPoints(round.id, match, p.pick) : null;
       const ptsChip = pts !== null
-        ? `<span class="gpick-pts ${pts > 0 ? 'gpick-pts-pos' : pts < 0 ? 'gpick-pts-neg' : 'gpick-pts-zero'}">${pts > 0 ? '+' : ''}${pts}</span>`
+        ? `<span class="gpick-pts ${pts > 0 ? 'gpick-pts-pos' : 'gpick-pts-zero'}">${pts > 0 ? '+' : ''}${pts}</span>`
         : '';
       return `
       <div class="gpick-name ${p.isSelf ? 'gpick-self' : ''} ${won ? 'gpick-correct' : lost ? 'gpick-wrong' : ''}">
