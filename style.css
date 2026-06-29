@@ -803,6 +803,7 @@ details summary:hover { color: var(--text); }
   margin-bottom: 0.35rem;
 }
 .spotlight-value { font-size: 1.05rem; font-weight: 700; color: var(--text); }
+.spotlight-empty { color: var(--text-dim) !important; font-size: 1.4rem; font-weight: 400; }
 .spotlight-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem; }
 
 .stats-section { margin-bottom: 2.5rem; }
