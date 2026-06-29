@@ -47,6 +47,7 @@ async function initAdmin() {
     renderOverview(users, rounds, openRound, matches, predictions, settings);
     if (openRound) renderPicksTracker(users, openRound, matches, predictions);
     renderPlayerList(users, rounds, matches, predictions, pickCounts);
+    renderPicksMatrix(users, rounds, matches, predictions);
   } catch (err) {
     console.error(err);
     document.getElementById("loading").innerHTML =
@@ -180,7 +181,10 @@ function renderPlayerList(users, rounds, matches, predictions, pickCounts) {
         if (isMaverick(match.id, winner, pickCounts)) pts += 1;
         if (typeof pick === "object") {
           const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);
-          const a1 = parseInt(match.score1), a2 = parseInt(match.score2);
+          let a1 = parseInt(match.score1), a2 = parseInt(match.score2);
+          if (!isNaN(a1) && !isNaN(a2) && a1 === a2 && match.result) {
+            if (match.result === "team1") a1++; else a2++;
+          }
           if (!isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
             if (s1 === a1 && s2 === a2) pts += 6;
             else if ((s1 - s2) === (a1 - a2)) pts += 1;
@@ -227,6 +231,98 @@ function renderPlayerList(users, rounds, matches, predictions, pickCounts) {
           </tr>`;
       }).join("")}
     </tbody>`;
+}
+
+function renderPicksMatrix(users, rounds, matches, predictions) {
+  const container = document.getElementById("picksMatrix");
+  if (!container) return;
+
+  const activeRounds = rounds.filter(r => r.status !== "upcoming");
+  if (!activeRounds.length) {
+    container.innerHTML = `<p class="text-muted" style="text-align:center;padding:1rem 0">No active rounds yet.</p>`;
+    return;
+  }
+
+  const sortedUsers = [...users].sort((a, b) => a.name.localeCompare(b.name));
+  const shortName = n => n.split(" ")[0];
+  const shorten = (s, max) => s && s.length > max ? s.slice(0, max) + "…" : (s || "TBD");
+
+  let html = "";
+
+  activeRounds.forEach(round => {
+    const roundMatches = Object.values(matches)
+      .filter(m => m.roundId === round.id && !m.freebie)
+      .sort((a, b) => {
+        const ta = a.kickoff ? (a.kickoff.toDate ? a.kickoff.toDate() : new Date(a.kickoff)).getTime() : 0;
+        const tb = b.kickoff ? (b.kickoff.toDate ? b.kickoff.toDate() : new Date(b.kickoff)).getTime() : 0;
+        return ta - tb;
+      });
+    if (!roundMatches.length) return;
+
+    const rows = roundMatches.map(match => {
+      const t1 = match.team1 || "TBD", t2 = match.team2 || "TBD";
+      const origA1 = parseInt(match.score1), origA2 = parseInt(match.score2);
+      let adjA1 = origA1, adjA2 = origA2;
+      const isPens = !isNaN(origA1) && !isNaN(origA2) && origA1 === origA2 && match.result;
+      if (isPens) { if (match.result === "team1") adjA1++; else adjA2++; }
+
+      const resultLabel = match.result
+        ? `${origA1}–${origA2}${isPens ? " pens" : ""} · ${match.result === "team1" ? shorten(t1, 12) : shorten(t2, 12)} wins`
+        : "";
+
+      const cells = sortedUsers.map(u => {
+        const pick = (predictions[u.id] || {})[match.id];
+        if (!pick) return `<td style="text-align:center;color:var(--text-dim);font-size:0.8rem">–</td>`;
+
+        const winner = typeof pick === "object" ? pick.winner : pick;
+        const pickedTeam = winner === "team1" ? t1 : t2;
+        const s1 = pick.score1 != null ? parseInt(pick.score1) : NaN;
+        const s2 = pick.score2 != null ? parseInt(pick.score2) : NaN;
+        const scoreStr = !isNaN(s1) && !isNaN(s2) ? `${s1}–${s2}` : "";
+
+        let color = "inherit", icon = "";
+        if (match.result) {
+          if (winner === match.result) {
+            const exact = !isNaN(s1) && !isNaN(s2) && s1 === adjA1 && s2 === adjA2;
+            color = "var(--green)";
+            icon = exact ? "★ " : "✓ ";
+          } else {
+            color = "var(--text-dim)";
+            icon = "✗ ";
+          }
+        }
+
+        return `<td style="text-align:center;font-size:0.78rem;color:${color}">
+          <div style="font-weight:600;white-space:nowrap">${icon}${shorten(pickedTeam, 11)}</div>
+          ${scoreStr ? `<div style="font-size:0.7rem;opacity:0.75">${scoreStr}</div>` : ""}
+        </td>`;
+      }).join("");
+
+      return `<tr>
+        <td style="white-space:nowrap">
+          <div style="font-size:0.8rem;font-weight:600">${shorten(t1, 14)} <span style="color:var(--text-dim)">v</span> ${shorten(t2, 14)}</div>
+          ${resultLabel ? `<div style="font-size:0.7rem;color:var(--text-muted)">${resultLabel}</div>` : ""}
+        </td>
+        ${cells}
+      </tr>`;
+    }).join("");
+
+    html += `
+      <h3 style="font-size:0.95rem;font-weight:700;margin:1.5rem 0 0.5rem;color:var(--navy)">${round.name}</h3>
+      <div style="overflow-x:auto;margin-bottom:0.5rem">
+        <table class="leaderboard-table" style="min-width:max-content">
+          <thead>
+            <tr>
+              <th style="min-width:160px">Match</th>
+              ${sortedUsers.map(u => `<th style="text-align:center;min-width:72px">${shortName(u.name)}</th>`).join("")}
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  });
+
+  container.innerHTML = html || `<p class="text-muted" style="text-align:center;padding:1rem 0">No picks yet.</p>`;
 }
 
 initAdmin();
