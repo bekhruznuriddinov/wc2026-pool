@@ -375,7 +375,7 @@ function matchCard(match, round) {
         ${bonusLabel()}
         ${predictedScoreLabel()}
       </div>` : ""}
-    ${clickable && !result ? `<div class="score-hint">Score: <strong style="color:var(--green)">+1</strong> winner <span class="chain-arrow">→</span> <strong style="color:var(--green)">+1</strong> margin <span class="chain-arrow">→</span> <strong style="color:var(--green)">+5</strong> exact &nbsp;·&nbsp; <strong style="color:var(--red)">−1</strong> if wrong</div>` : ""}
+    ${clickable && !result ? `<div class="score-hint">Score: <strong style="color:var(--green)">+1</strong> winner <span class="chain-arrow">→</span> <strong style="color:#7F77DD">+1</strong> maverick <span class="chain-arrow">→</span> <strong style="color:var(--green)">+1</strong> margin <span class="chain-arrow">→</span> <strong style="color:var(--green)">+5</strong> exact &nbsp;·&nbsp; <strong style="color:var(--red)">−1</strong> if wrong</div>` : ""}
   </div>`;
 }
 
