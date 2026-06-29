@@ -117,7 +117,7 @@ async function initStats() {
     document.getElementById("statsContent").style.display = "block";
 
     renderSpotlight(ranked, matches, pickCounts);
-    renderPointsRace(ranked, activeRounds);
+    renderPointsRace(ranked, matches, activeRounds);
     renderConsensus(matches, rounds, pickCounts);
     renderHeatmap(ranked, matches, rounds);
 
@@ -204,24 +204,39 @@ function renderSpotlight(ranked, matches, pickCounts) {
 }
 
 
-function renderPointsRace(ranked, activeRounds) {
-  if (activeRounds.length < 1 || ranked.length === 0) {
+function renderPointsRace(ranked, matches, activeRounds) {
+  // All decided matches sorted chronologically across all rounds
+  const decided = Object.values(matches)
+    .filter(m => m.result && m.team1 && m.team1 !== "TBD")
+    .sort((a, b) => {
+      const ta = a.kickoff ? (a.kickoff.toDate ? a.kickoff.toDate() : new Date(a.kickoff)).getTime() : 0;
+      const tb = b.kickoff ? (b.kickoff.toDate ? b.kickoff.toDate() : new Date(b.kickoff)).getTime() : 0;
+      return ta - tb;
+    });
+
+  if (!decided.length || !ranked.length) {
     document.getElementById("pointsRaceSection").style.display = "none";
     return;
   }
-  const labels = activeRounds.map(r => r.name);
+
+  const abbr = name => (name || "?").slice(0, 3).toUpperCase();
+  const labels = decided.map(m => `${abbr(m.team1)}-${abbr(m.team2)}`);
+
   const datasets = ranked.map((u, i) => {
     let cum = 0;
     return {
       label: u.name,
-      data: activeRounds.map(r => { cum += u.roundScores[r.id] || 0; return cum; }),
+      data: decided.map(m => { cum += u.matchResults[m.id]?.pts || 0; return cum; }),
       borderColor: CHART_COLORS[i % CHART_COLORS.length],
       backgroundColor: "transparent",
-      tension: 0.3,
-      pointRadius: 4,
+      tension: 0.2,
+      pointRadius: decided.length > 20 ? 2 : 3,
       borderWidth: 2,
     };
   });
+
+  document.querySelector("#pointsRaceSection .stats-section-sub").textContent =
+    "Cumulative points after each match";
 
   new Chart(document.getElementById("pointsRaceChart").getContext("2d"), {
     type: "line",
@@ -230,9 +245,20 @@ function renderPointsRace(ranked, activeRounds) {
       responsive: true,
       plugins: {
         legend: { position: "bottom", labels: { color: "#5A6B80", font: { size: 11 }, boxWidth: 12, padding: 12 } },
+        tooltip: {
+          callbacks: {
+            title: ctx => {
+              const m = decided[ctx[0].dataIndex];
+              return `${m.team1} vs ${m.team2}`;
+            },
+          },
+        },
       },
       scales: {
-        x: { ticks: { color: "#5A6B80", font: { size: 11 } }, grid: { color: "rgba(90,107,128,0.15)" } },
+        x: {
+          ticks: { color: "#5A6B80", font: { size: 9 }, maxRotation: 60, minRotation: 45 },
+          grid: { color: "rgba(90,107,128,0.15)" },
+        },
         y: { ticks: { color: "#5A6B80", font: { size: 11 } }, grid: { color: "rgba(90,107,128,0.15)" }, beginAtZero: true },
       },
     },
