@@ -523,19 +523,19 @@ select option { background: #fff; color: var(--text); }
 
 /* SUBMIT BAR */
 .submit-bar {
-  position: sticky;
+  position: fixed;
   bottom: 1.5rem;
-  margin-top: 2rem;
+  right: 1.5rem;
   background: var(--navy);
-  border-radius: var(--radius);
-  padding: 0.75rem 1.25rem;
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  box-shadow: 0 4px 20px rgba(15,33,64,0.25);
+  gap: 0.6rem;
+  box-shadow: 0 4px 16px rgba(15,33,64,0.3);
+  z-index: 50;
 }
-.submit-bar span { color: rgba(255,255,255,0.85); font-size: 0.875rem; }
+.submit-bar span { color: rgba(255,255,255,0.9); font-size: 0.8rem; }
 
 .save-indicator {
   font-size: 0.8rem;
@@ -612,12 +612,11 @@ details summary:hover { color: var(--text); }
   .team-btn { padding: 0.65rem 0.4rem; min-height: 72px; }
   .score-input { width: 36px !important; font-size: 0.9rem !important; }
 
-  /* Submit bar — flush to bottom on mobile */
+  /* Submit bar — keep in corner on mobile, just tighter */
   .submit-bar {
-    bottom: 0;
-    border-radius: var(--radius) var(--radius) 0 0;
-    margin-top: 1rem;
-    padding: 0.75rem 1rem;
+    bottom: 1rem;
+    right: 1rem;
+    padding: 0.45rem 0.85rem;
   }
 
   /* Leaderboard table — horizontal scroll */
