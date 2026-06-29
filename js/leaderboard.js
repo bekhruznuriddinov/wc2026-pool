@@ -116,7 +116,9 @@ async function initLeaderboard() {
     document.getElementById("loading").style.display = "none";
 
     // Stats
+    const decidedCount = Object.values(matches).filter(m => m.result && m.team1 && m.team1 !== "TBD").length;
     document.getElementById("playerCount").textContent = ranked.length;
+    document.getElementById("matchesComplete").textContent = decidedCount;
     document.getElementById("roundsComplete").textContent =
       rounds.filter(r => r.status === "complete").length;
     document.getElementById("topScore").textContent =
