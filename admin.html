@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin — HCAP World Cup 2026</title>
+  <title>Commissioner — HCAP World Cup 2026</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
 </head>
 <body>
 
@@ -18,163 +17,71 @@
       <div class="logo-divider"></div>
       <span class="logo-label">World Cup 2026</span>
     </a>
-    <div style="display:flex;align-items:center;gap:0.75rem">
-      <span class="badge badge-open">Admin</span>
-      <span id="adminEmail" class="nav-link" style="cursor:default"></span>
-    </div>
-    <a href="predictions.html" class="nav-link">← Back to pool</a>
+    <nav class="topnav-links">
+      <a href="predictions.html" class="nav-link">📋 My Picks</a>
+      <a href="leaderboard.html" class="nav-link">🏆 Leaderboard</a>
+      <a href="stats.html" class="nav-link">📊 Stats</a>
+    </nav>
+    <div id="userBar"></div>
   </div>
 </nav>
 
 <div class="page wide">
-
-  <div class="page-header" style="margin-top:1.5rem">
-    <h1>Admin panel</h1>
-    <p>Manage rounds, enter team names, record results, and recalculate scores.</p>
+  <div class="page-header" style="margin-top:1.5rem;display:flex;align-items:center;gap:0.75rem">
+    <h1>Commissioner</h1>
+    <span class="badge badge-open">Admin only</span>
   </div>
 
-  <div id="adminAlert" class="alert" style="display:none;margin-bottom:1.5rem"></div>
-
-  <!-- PLAYERS -->
-  <div class="admin-section">
-    <h2>Players</h2>
-    <div class="card" style="padding:0;overflow:auto;margin-bottom:1rem">
-      <div id="playersTable" class="loading-center"><div class="spinner"></div></div>
-    </div>
+  <div id="loading" class="loading-center">
+    <div class="spinner"></div>
+    <span>Loading…</span>
   </div>
 
-  <hr class="divider">
+  <div id="dashContent" style="display:none">
 
-  <!-- ROUNDS -->
-  <div class="admin-section">
-    <h2>Rounds</h2>
-    <div class="card" style="padding:0;overflow:auto;margin-bottom:1rem">
-      <div id="roundsTable" class="loading-center"><div class="spinner"></div></div>
-    </div>
+    <!-- Overview cards -->
+    <div id="overviewCards" class="stats-spotlight" style="margin-bottom:2rem"></div>
 
-    <details>
-      <summary>+ Create a new round</summary>
-      <div class="card" style="margin-top:0.75rem">
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.75rem;margin-bottom:0.75rem">
-          <div class="form-group" style="margin:0">
-            <label>Round ID *</label>
-            <select id="newRoundId">
-              <option value="r32">r32 — Round of 32</option>
-              <option value="r16">r16 — Round of 16</option>
-              <option value="qf">qf — Quarter-finals</option>
-              <option value="sf">sf — Semi-finals</option>
-              <option value="third">third — 3rd Place</option>
-              <option value="final">final — Final</option>
-            </select>
-          </div>
-          <div class="form-group" style="margin:0">
-            <label>Display name *</label>
-            <input type="text" id="newRoundName" placeholder="Round of 32">
-          </div>
-          <div class="form-group" style="margin:0">
-            <label>Display order *</label>
-            <input type="number" id="newRoundOrder" placeholder="1" min="1">
-          </div>
-          <div class="form-group" style="margin:0">
-            <label>Prediction deadline</label>
-            <input type="datetime-local" id="newRoundDeadline">
-          </div>
-        </div>
-        <button id="createRoundBtn" class="btn btn-success">Create round</button>
-      </div>
-    </details>
-  </div>
-
-  <hr class="divider">
-
-  <!-- MATCHES -->
-  <div class="admin-section">
-    <h2>Matches</h2>
-    <div class="card" style="padding:0;overflow:auto;margin-bottom:1rem">
-      <div id="matchesTable" class="loading-center"><div class="spinner"></div></div>
-    </div>
-
-    <details>
-      <summary>+ Bulk-create empty match slots</summary>
-      <div class="card" style="margin-top:0.75rem">
-        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:0.75rem;align-items:end">
-          <div class="form-group" style="margin:0">
-            <label>Round ID</label>
-            <input type="text" id="bulkRoundId" placeholder="r32">
-          </div>
-          <div class="form-group" style="margin:0">
-            <label>Number of matches</label>
-            <input type="number" id="bulkCount" placeholder="16" min="1" max="32">
-          </div>
-          <button id="bulkAddBtn" class="btn btn-secondary">Bulk add</button>
-        </div>
-        <p class="text-muted text-small" style="margin-top:0.75rem">
-          Creates empty "TBD vs TBD" slots. Fill in team names once the group stage ends.
-        </p>
-      </div>
-    </details>
-
-    <details style="margin-top:0.5rem">
-      <summary>+ Add a single match</summary>
-      <div class="card" style="margin-top:0.75rem">
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0.75rem;margin-bottom:0.75rem">
-          <div class="form-group" style="margin:0">
-            <label>Round ID *</label>
-            <input type="text" id="matchRound" placeholder="r32">
-          </div>
-          <div class="form-group" style="margin:0">
-            <label>Match # *</label>
-            <input type="number" id="matchNum" placeholder="1" min="1">
-          </div>
-          <div class="form-group" style="margin:0">
-            <label>Team 1</label>
-            <input type="text" id="matchTeam1" placeholder="Brazil">
-          </div>
-          <div class="form-group" style="margin:0">
-            <label>Team 2</label>
-            <input type="text" id="matchTeam2" placeholder="England">
-          </div>
-        </div>
-        <button id="addMatchBtn" class="btn btn-success">Add match</button>
-      </div>
-    </details>
-  </div>
-
-  <hr class="divider">
-
-  <!-- SCORES -->
-  <div class="admin-section">
-    <h2>Scores</h2>
-    <p class="text-muted" style="margin-bottom:1rem;font-size:0.875rem">
-      After entering all results for a round, recalculate to update the leaderboard.
-    </p>
-    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center">
-      <button id="recalcBtn" class="btn btn-secondary">Recalculate all scores</button>
-      <button id="setKickoffsBtn" class="btn btn-secondary" onclick="setR32Kickoffs()">Set R32 kickoff times</button>
-    </div>
-    <p class="text-muted text-small" style="margin-top:0.5rem">
-      "Set R32 kickoff times" stamps every R32 match with the official UTC kickoff time so individual games lock automatically at kickoff — no manual closing needed.
-    </p>
-  </div>
-
-  <hr class="divider">
-
-  <!-- SETTINGS -->
-  <div class="admin-section">
-    <h2>Settings</h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;max-width:480px;margin-bottom:1rem">
-      <div class="form-group" style="margin:0">
-        <label>Tournament name</label>
-        <input type="text" id="settingName" placeholder="HCAP WC 2026 Pool">
-      </div>
-      <div class="form-group" style="margin:0">
-        <label>Buy-in amount ($)</label>
-        <input type="number" id="settingBuyIn" placeholder="20" min="0">
+    <!-- Current round picks tracker -->
+    <div id="picksSection" class="admin-section" style="display:none">
+      <h2 style="font-size:1.05rem;font-weight:700;margin-bottom:0.25rem" id="picksTitle"></h2>
+      <p class="text-muted" style="font-size:0.8rem;margin-bottom:1rem">Who still needs to submit picks</p>
+      <div class="card" style="padding:0;overflow:auto">
+        <table class="leaderboard-table" id="picksTable"></table>
       </div>
     </div>
-    <button id="saveSettingsBtn" class="btn btn-secondary">Save settings</button>
-  </div>
 
+    <hr class="divider" id="picksDivider" style="display:none">
+
+    <!-- All players -->
+    <div class="admin-section">
+      <h2 style="font-size:1.05rem;font-weight:700;margin-bottom:1rem">All players</h2>
+      <div class="card" style="padding:0;overflow:auto">
+        <table class="leaderboard-table" id="playersTable"></table>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Actions -->
+    <div class="admin-section">
+      <h2 style="font-size:1.05rem;font-weight:700;margin-bottom:1rem">Actions</h2>
+      <div style="display:flex;flex-wrap:wrap;gap:0.75rem">
+        <a href="https://github.com/bekhruznuriddinov/wc2026-pool/actions/workflows/update-results.yml"
+           target="_blank" class="btn btn-secondary">
+          Trigger results update →
+        </a>
+        <a href="https://console.firebase.google.com/project/hcap-world-cup-predictions/firestore/data"
+           target="_blank" class="btn btn-secondary">
+          Firebase Console →
+        </a>
+      </div>
+      <p class="text-muted text-small" style="margin-top:0.75rem">
+        Results update: click "Run workflow" on the GitHub Actions page. Matches, bracket, and round status all update automatically — no manual entry needed.
+      </p>
+    </div>
+
+  </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
