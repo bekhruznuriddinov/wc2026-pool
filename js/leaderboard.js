@@ -51,6 +51,7 @@ async function initLeaderboard() {
       let statCorrect = 0;   // correct winner
       let statMargin = 0;    // correct winner + correct goal difference
       let statExact = 0;     // correct winner + exact scoreline
+      let statMaverick = 0;  // correct winner + minority pick
       const roundScores = {};
 
       rounds.forEach(round => {
@@ -79,7 +80,7 @@ async function initLeaderboard() {
 
           let pts = correctWin ? ROUND_POINTS[round.id] : 0;
 
-          if (correctWin && isMaverick(matchId, winner, pickCounts)) pts += 1;
+          if (correctWin && isMaverick(matchId, winner, pickCounts)) { pts += 1; statMaverick++; }
 
           if (typeof pick === "object" && pick.score1 !== null && pick.score2 !== null) {
             const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);
@@ -100,7 +101,7 @@ async function initLeaderboard() {
         totalPoints += rScore;
       });
 
-      return { ...u, totalPoints, statPicked, statCorrect, statMargin, statExact, roundScores };
+      return { ...u, totalPoints, statPicked, statCorrect, statMargin, statExact, statMaverick, roundScores };
     });
 
     // Sort by total points desc, then name
@@ -142,6 +143,7 @@ async function initLeaderboard() {
             <th style="text-align:center">Winners<br><span style="color:var(--text-dim);font-size:0.65rem">correct</span></th>
             <th style="text-align:center">Margin<br><span style="color:var(--text-dim);font-size:0.65rem">+1 bonus</span></th>
             <th style="text-align:center">Exact<br><span style="color:var(--text-dim);font-size:0.65rem">+5 bonus</span></th>
+            <th style="text-align:center">Maverick<br><span style="color:var(--text-dim);font-size:0.65rem">+1 bonus</span></th>
             <th style="text-align:right">Total</th>
           </tr>
         </thead>
@@ -163,6 +165,7 @@ async function initLeaderboard() {
                 <td style="text-align:center" class="stat-cell">${u.statCorrect}/${totalMatches}</td>
                 <td style="text-align:center" class="stat-cell">${u.statMargin}/${totalMatches}</td>
                 <td style="text-align:center" class="stat-cell">${u.statExact}/${totalMatches}</td>
+                <td style="text-align:center" class="stat-cell" style="color:${u.statMaverick > 0 ? '#7F77DD' : 'inherit'}">${u.statMaverick}</td>
                 <td style="text-align:right"><span class="points-big">${u.totalPoints}</span></td>
               </tr>`;
           }).join("")}

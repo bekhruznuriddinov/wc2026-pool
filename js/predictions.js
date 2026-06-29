@@ -137,7 +137,7 @@ function renderRound(round) {
   document.getElementById("roundAlert").innerHTML = alertHtml;
 
   // Scoring banner
-  const maxMatchPts = pts + 6;
+  const maxMatchPts = pts + 7; // base + maverick + margin + exact
   document.getElementById("scoringBanner").innerHTML = (isOpen || isComplete) ? `
     <details class="scoring-banner">
       <summary>How scoring works</summary>
@@ -145,19 +145,17 @@ function renderRound(round) {
         <div class="scoring-chain">
           <span><strong style="color:var(--green)">+1</strong> correct winner</span>
           <span class="chain-arrow">→</span>
+          <span><strong style="color:#7F77DD">+1</strong> maverick</span>
+          <span class="chain-arrow">→</span>
           <span><strong style="color:var(--green)">+1</strong> right margin</span>
           <span class="chain-arrow">→</span>
           <span><strong style="color:var(--green)">+5</strong> exact score</span>
           <span class="chain-arrow">=</span>
-          <strong>${maxMatchPts - 1} pts max per match</strong>
+          <strong>${maxMatchPts} pts max</strong>
         </div>
         <div style="margin-top:0.4rem;font-size:0.8rem;color:var(--text-muted)">
-          Bonuses stack — nail the exact score and you earn all three.
-          If you predict a score and get it wrong, <strong style="color:var(--red)">−1 pt</strong> is deducted —
-          but only if you picked the correct winner, so you can never score negative on a single match.
-        </div>
-        <div style="margin-top:0.3rem;font-size:0.8rem;color:var(--text-muted)">
-          <strong style="color:#7F77DD">+1 maverick bonus</strong> if you picked against the majority and won.
+          Maverick: <strong style="color:#7F77DD">+1</strong> if you picked against the majority and won.
+          Bonuses stack. Wrong score prediction deducts <strong style="color:var(--red)">−1</strong> (correct winner only, never goes negative).
         </div>
       </div>
     </details>` : "";
