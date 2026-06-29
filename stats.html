@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stats — HCAP World Cup 2026</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="predictions.html" class="logo-wrap">
+      <img src="https://images.squarespace-cdn.com/content/v1/6334ad5adde1f249453ad01a/1664396655469-ZPR66CXLS6CHH5MLB32I/HCAP-Partners.png?format=300w"
+           alt="HCAP Partners" class="logo-img">
+      <div class="logo-divider"></div>
+      <span class="logo-label">World Cup 2026</span>
+    </a>
+    <nav class="topnav-links">
+      <a href="predictions.html" class="nav-link">My Picks</a>
+      <a href="leaderboard.html" class="nav-link">Leaderboard</a>
+      <a href="stats.html" class="nav-link active">Stats</a>
+    </nav>
+    <div id="userBar"></div>
+  </div>
+</nav>
+
+<div class="page wide">
+  <div class="page-header" style="margin-top:1.5rem">
+    <h1>Pool stats</h1>
+    <p>Updated as matches are decided.</p>
+  </div>
+
+  <div id="loading" class="loading-center">
+    <div class="spinner"></div>
+    <span>Loading stats…</span>
+  </div>
+
+  <div id="statsContent" style="display:none">
+
+    <div id="spotlightCards" class="stats-spotlight"></div>
+
+    <div class="stats-section" id="pointsRaceSection">
+      <h2 class="stats-section-title">Points race</h2>
+      <p class="stats-section-sub">Cumulative points after each round</p>
+      <div class="stats-chart-wrap">
+        <canvas id="pointsRaceChart"></canvas>
+      </div>
+    </div>
+
+    <div class="stats-section">
+      <h2 class="stats-section-title">Who picked who</h2>
+      <p class="stats-section-sub">How the group split on each decided match</p>
+      <div id="consensusList"></div>
+    </div>
+
+    <div class="stats-section">
+      <h2 class="stats-section-title">Pick history</h2>
+      <p class="stats-section-sub">
+        <span class="hm-legend hm-correct"></span> correct &nbsp;
+        <span class="hm-legend hm-exact"></span> exact score &nbsp;
+        <span class="hm-legend hm-wrong"></span> wrong &nbsp;
+        <span class="hm-legend hm-no-pick"></span> no pick
+      </p>
+      <div style="overflow-x:auto">
+        <div id="heatmap"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="js/firebase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/stats.js"></script>
+</body>
+</html>
