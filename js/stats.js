@@ -1,8 +1,6 @@
 const _statsUser = getSession();
 if (_statsUser) renderUserBar(_statsUser);
 
-const ROUND_POINTS = { r32: 1, r16: 2, qf: 4, sf: 8, final: 16, third: 4 };
-
 const CHART_COLORS = [
   "#378ADD","#1D9E75","#D85A30","#7F77DD","#D4537E",
   "#BA7517","#639922","#E24B4A","#185FA5","#0F6E56",
