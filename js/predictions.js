@@ -156,6 +156,7 @@ function renderRound(round) {
         <div style="margin-top:0.4rem;font-size:0.8rem;color:var(--text-muted)">
           Maverick: <strong style="color:#7F77DD">+1</strong> if you picked against the majority and won.
           Bonuses stack. Wrong score prediction deducts <strong style="color:var(--red)">−1</strong> (correct winner only, never goes negative).
+          Penalty shootouts: the winning team gets <strong>+1 goal</strong> added for scoring purposes — so a 1–1 pens result is treated as 2–1 (1-goal margin).
         </div>
       </div>
     </details>` : "";
