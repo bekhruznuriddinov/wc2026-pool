@@ -34,7 +34,7 @@ function renderUserBar(user) {
   if (!el || !user) return;
   el.style.cssText = "display:flex;align-items:center;gap:0.75rem;";
   const adminLink = user.email === ADMIN_EMAIL
-    ? `<a href="admin.html" class="btn btn-ghost btn-sm" style="color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.15);white-space:nowrap">Admin</a>`
+    ? `<a href="admin.html" class="nav-link">⚙️ Admin</a>`
     : "";
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:8px">
@@ -42,7 +42,7 @@ function renderUserBar(user) {
       <span class="user-name" style="color:rgba(255,255,255,0.75);font-size:0.82rem;white-space:nowrap">${user.name}</span>
     </div>
     ${adminLink}
-    <button class="btn btn-ghost btn-sm" onclick="logout()" style="color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.15);white-space:nowrap">Sign out</button>
+    <button class="nav-link" style="background:none;border:none;cursor:pointer;font-family:inherit" onclick="logout()">🚪 Sign out</button>
   `;
 }
 
