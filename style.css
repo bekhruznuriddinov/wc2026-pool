@@ -809,8 +809,7 @@ details summary:hover { color: var(--text); }
 .stats-section { margin-bottom: 2.5rem; }
 .stats-section-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.2rem; }
 .stats-section-sub { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem; }
-.stats-chart-wrap { position: relative; max-height: 360px; }
-#pointsRaceSection .stats-chart-wrap { height: 420px; max-height: 420px; padding: 0 1.5rem; }
+.stats-chart-wrap { position: relative; height: 420px; max-height: 420px; }
 
 /* Consensus */
 .consensus-round-label {
