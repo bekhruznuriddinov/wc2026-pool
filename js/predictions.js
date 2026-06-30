@@ -285,11 +285,11 @@ function matchCard(match, round) {
     let earned = correctWinner ? pts : 0;
     const notes = [];
     const pc = getPickCounts();
-    if (correctWinner && isMaverick(match.id, p.winner, pc)) { earned += 1; notes.push("+1 maverick"); }
+    if (correctWinner && isMaverick(match.id, p.winner, pc)) { earned += pts; notes.push(`+${pts} maverick`); }
     if (!isNaN(s1) && !isNaN(s2) && !isNaN(a1) && !isNaN(a2)) {
-      if (s1 === a1 && s2 === a2) { if (correctWinner) { earned += 6; notes.push("+5 exact +1 margin!"); } }
-      else if ((s1 - s2) === (a1 - a2)) { if (correctWinner) { earned += 1; notes.push("+1 correct margin"); } }
-      else if (correctWinner) { earned -= 1; notes.push("−1 wrong score"); }
+      if (s1 === a1 && s2 === a2) { if (correctWinner) { earned += 6 * pts; notes.push(`+${pts} margin +${5*pts} exact!`); } }
+      else if ((s1 - s2) === (a1 - a2)) { if (correctWinner) { earned += pts; notes.push(`+${pts} correct margin`); } }
+      else if (correctWinner) { earned -= pts; notes.push(`−${pts} wrong score`); }
     }
     const color = correctWinner ? "text-green" : "text-red";
     const icon = correctWinner ? "✓" : "✗";
@@ -310,7 +310,7 @@ function matchCard(match, round) {
   const peers2 = peerPicks[match.id]?.team2 || [];
 
   // Pts chip — top-right of card
-  const maxPts = ROUND_POINTS[round.id] + 7; // +1 maverick +1 margin +5 exact
+  const maxPts = 8 * ROUND_POINTS[round.id]; // 1× base + 1× maverick + 1× margin + 5× exact
   let ptsChip;
   if (match.freebie) {
     ptsChip = `<span class="match-pts-chip match-pts-free">FREE</span>`;
@@ -577,20 +577,20 @@ function calcMatchPoints(roundId, match, pick, pickCounts) {
   if (!pick?.winner) return 0;
   const correctWin = pick.winner === match.result;
   let pts = correctWin ? ROUND_POINTS[roundId] : 0;
-  if (correctWin && isMaverick(match.id, pick.winner, pickCounts)) pts += 1;
+  const base = ROUND_POINTS[roundId];
+  if (correctWin && isMaverick(match.id, pick.winner, pickCounts)) pts += base;
   const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);
   let a1 = parseInt(match.score1), a2 = parseInt(match.score2);
   const isPens = !isNaN(a1) && !isNaN(a2) && a1 === a2 && !!match.result;
   if (isPens) { if (match.result === "team1") a1++; else a2++; }
-  // If pen match, also treat a draw pick as winner+1 (e.g. picking 1-1 = same as 2-1)
   let ps1 = s1, ps2 = s2;
   if (isPens && !isNaN(ps1) && !isNaN(ps2) && ps1 === ps2 && pick.winner) {
     if (pick.winner === "team1") ps1++; else ps2++;
   }
   if (!isNaN(ps1) && !isNaN(ps2) && !isNaN(a1) && !isNaN(a2)) {
-    if (ps1 === a1 && ps2 === a2) { if (correctWin) pts += 6; } // +5 exact +1 margin
-    else if ((ps1 - ps2) === (a1 - a2)) { if (correctWin) pts += 1; }
-    else if (correctWin) pts -= 1; // penalty only neutralises a winner pick, never goes negative
+    if (ps1 === a1 && ps2 === a2) { if (correctWin) pts += 6 * base; }
+    else if ((ps1 - ps2) === (a1 - a2)) { if (correctWin) pts += base; }
+    else if (correctWin) pts -= base;
   }
   return pts;
 }

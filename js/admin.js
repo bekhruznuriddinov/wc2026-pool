@@ -185,8 +185,9 @@ function renderPlayerList(users, rounds, matches, predictions, pickCounts) {
         if (!pick) return;
         const winner = typeof pick === "object" ? pick.winner : pick;
         if (winner !== match.result) return;
-        let pts = ROUND_POINTS[round.id];
-        if (isMaverick(match.id, winner, pickCounts)) pts += 1;
+        const base = ROUND_POINTS[round.id];
+        let pts = base;
+        if (isMaverick(match.id, winner, pickCounts)) pts += base;
         if (typeof pick === "object") {
           const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);
           let a1 = parseInt(match.score1), a2 = parseInt(match.score2);
@@ -197,9 +198,9 @@ function renderPlayerList(users, rounds, matches, predictions, pickCounts) {
             if (winner === "team1") ps1++; else ps2++;
           }
           if (!isNaN(ps1) && !isNaN(ps2) && !isNaN(a1) && !isNaN(a2)) {
-            if (ps1 === a1 && ps2 === a2) pts += 6;
-            else if ((ps1 - ps2) === (a1 - a2)) pts += 1;
-            else pts -= 1;
+            if (ps1 === a1 && ps2 === a2) pts += 6 * base;
+            else if ((ps1 - ps2) === (a1 - a2)) pts += base;
+            else pts -= base;
           }
         }
         total += pts;

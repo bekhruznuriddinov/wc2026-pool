@@ -10,9 +10,10 @@ function calcPts(roundId, match, pick, pickCounts) {
   if (!match.result) return null;
   if (match.freebie) return ROUND_POINTS[roundId];
   if (!pick?.winner) return 0;
+  const base = ROUND_POINTS[roundId];
   const correctWin = pick.winner === match.result;
-  let pts = correctWin ? ROUND_POINTS[roundId] : 0;
-  if (correctWin && isMaverick(match.id, pick.winner, pickCounts)) pts += 1;
+  let pts = correctWin ? base : 0;
+  if (correctWin && isMaverick(match.id, pick.winner, pickCounts)) pts += base;
   const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);
   let a1 = parseInt(match.score1), a2 = parseInt(match.score2);
   const isPens = !isNaN(a1) && !isNaN(a2) && a1 === a2 && !!match.result;
@@ -22,9 +23,9 @@ function calcPts(roundId, match, pick, pickCounts) {
     if (pick.winner === "team1") ps1++; else ps2++;
   }
   if (!isNaN(ps1) && !isNaN(ps2) && !isNaN(a1) && !isNaN(a2)) {
-    if (ps1 === a1 && ps2 === a2) { if (correctWin) pts += 6; }
-    else if ((ps1 - ps2) === (a1 - a2)) { if (correctWin) pts += 1; }
-    else if (correctWin) pts -= 1;
+    if (ps1 === a1 && ps2 === a2) { if (correctWin) pts += 6 * base; }
+    else if ((ps1 - ps2) === (a1 - a2)) { if (correctWin) pts += base; }
+    else if (correctWin) pts -= base;
   }
   return pts;
 }

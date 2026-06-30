@@ -78,9 +78,10 @@ async function initLeaderboard() {
           const correctWin = winner === match.result;
           if (correctWin) statCorrect++;
 
-          let pts = correctWin ? ROUND_POINTS[round.id] : 0;
+          const base = ROUND_POINTS[round.id];
+          let pts = correctWin ? base : 0;
 
-          if (correctWin && isMaverick(matchId, winner, pickCounts)) { pts += 1; statMaverick++; }
+          if (correctWin && isMaverick(matchId, winner, pickCounts)) { pts += base; statMaverick++; }
 
           if (typeof pick === "object" && pick.score1 !== null && pick.score2 !== null) {
             const s1 = parseInt(pick.score1), s2 = parseInt(pick.score2);
@@ -93,11 +94,11 @@ async function initLeaderboard() {
             }
             if (!isNaN(ps1) && !isNaN(ps2) && !isNaN(a1) && !isNaN(a2)) {
               if (ps1 === a1 && ps2 === a2) {
-                if (correctWin) { statExact++; statMargin++; pts += 6; } // +5 exact +1 margin
+                if (correctWin) { statExact++; statMargin++; pts += 6 * base; }
               } else if ((ps1 - ps2) === (a1 - a2)) {
-                if (correctWin) { statMargin++; pts += 1; }
+                if (correctWin) { statMargin++; pts += base; }
               } else if (correctWin) {
-                pts -= 1; // penalty only neutralises a winner pick, never goes negative
+                pts -= base;
               }
             }
           }
