@@ -245,6 +245,8 @@ function renderPointsRace(ranked, matches, activeRounds) {
     data: { labels, datasets },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: 0 },
       plugins: {
         legend: { position: "bottom", labels: { color: "#5A6B80", font: { size: 11 }, boxWidth: 12, padding: 12 } },
         tooltip: {
