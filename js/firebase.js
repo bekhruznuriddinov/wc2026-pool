@@ -47,6 +47,22 @@ const ROUND_POINTS = {
   third: 4
 };
 
+// Given an array of full name strings, returns a map { fullName → displayName }
+// where displayName is the first name if unique across all players, full name otherwise.
+function buildDisplayNames(names) {
+  const firstCount = {};
+  names.forEach(n => {
+    const first = (n || "").split(" ")[0];
+    firstCount[first] = (firstCount[first] || 0) + 1;
+  });
+  const map = {};
+  names.forEach(n => {
+    const first = (n || "").split(" ")[0];
+    map[n] = firstCount[first] > 1 ? n : first;
+  });
+  return map;
+}
+
 // Returns true when the given side was the minority pick and can earn the maverick +1 bonus.
 // Requires at least 2 total picks; strictly fewer than half chose this side.
 function isMaverick(matchId, side, pickCounts) {

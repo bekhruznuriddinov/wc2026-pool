@@ -109,6 +109,7 @@ function renderOverview(users, rounds, openRound, matches, predictions, settings
 }
 
 function renderPicksTracker(users, openRound, matches, predictions) {
+  const dn = buildDisplayNames(users.map(u => u.name));
   const roundMatches = getRoundMatches(matches, openRound.id);
   const totalM = roundMatches.length;
 
@@ -148,7 +149,7 @@ function renderPicksTracker(users, openRound, matches, predictions) {
             <td>
               <div class="flex">
                 <div class="user-avatar" style="width:28px;height:28px;font-size:0.75rem">${initials(u.name)}</div>
-                <span>${u.name}</span>
+                <span>${dn[u.name]}</span>
               </div>
             </td>
             <td style="text-align:center" class="stat-cell">${u.made}/${totalM}</td>
@@ -164,6 +165,7 @@ function renderPicksTracker(users, openRound, matches, predictions) {
 }
 
 function renderPlayerList(users, rounds, matches, predictions, pickCounts) {
+  const dn = buildDisplayNames(users.map(u => u.name));
   if (!users.length) {
     document.getElementById("playersTable").innerHTML =
       `<tr><td colspan="5"><div class="empty-state"><div class="icon">👥</div><h3>No players yet</h3></div></td></tr>`;
@@ -234,7 +236,7 @@ function renderPlayerList(users, rounds, matches, predictions, pickCounts) {
             <td>
               <div class="flex">
                 <div class="user-avatar" style="width:28px;height:28px;font-size:0.75rem">${initials(u.name)}</div>
-                <span>${u.name}</span>
+                <span>${dn[u.name]}</span>
               </div>
             </td>
             <td class="stat-cell">${u.email || "–"}</td>
@@ -255,8 +257,8 @@ function renderPicksMatrix(users, rounds, matches, predictions) {
     return;
   }
 
+  const dn = buildDisplayNames(users.map(u => u.name));
   const sortedUsers = [...users].sort((a, b) => a.name.localeCompare(b.name));
-  const shortName = n => n.split(" ")[0];
   const shorten = (s, max) => s && s.length > max ? s.slice(0, max) + "…" : (s || "TBD");
 
   let html = "";
@@ -330,7 +332,7 @@ function renderPicksMatrix(users, rounds, matches, predictions) {
           <thead>
             <tr>
               <th style="min-width:160px">Match</th>
-              ${sortedUsers.map(u => `<th style="text-align:center;min-width:72px">${shortName(u.name)}</th>`).join("")}
+              ${sortedUsers.map(u => `<th style="text-align:center;min-width:72px">${dn[u.name]}</th>`).join("")}
             </tr>
           </thead>
           <tbody>${rows}</tbody>

@@ -113,6 +113,7 @@ async function initLeaderboard() {
 
     // Sort by total points desc, then name
     ranked.sort((a, b) => b.totalPoints - a.totalPoints || a.name.localeCompare(b.name));
+    const dn = buildDisplayNames(ranked.map(u => u.name));
 
     document.getElementById("loading").style.display = "none";
 
@@ -166,7 +167,7 @@ async function initLeaderboard() {
                 <td>
                   <div class="flex">
                     <div class="user-avatar" style="width:28px;height:28px;font-size:0.75rem">${initials(u.name)}</div>
-                    <span>${u.name}</span>
+                    <span>${dn[u.name]}</span>
                   </div>
                 </td>
                 ${scoredRounds.map(r => `<td style="text-align:center"><span class="score-chip">${u.roundScores[r.id] || 0}</span></td>`).join("")}

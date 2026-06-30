@@ -114,13 +114,15 @@ async function initStats() {
       return { ...u, totalPoints, roundScores, matchResults, statExact, statContrarian };
     }).sort((a, b) => b.totalPoints - a.totalPoints || a.name.localeCompare(b.name));
 
+    const dn = buildDisplayNames(ranked.map(u => u.name));
+
     document.getElementById("loading").style.display = "none";
     document.getElementById("statsContent").style.display = "block";
 
-    renderSpotlight(ranked, matches, pickCounts);
-    renderPointsRace(ranked, matches, activeRounds);
+    renderSpotlight(ranked, matches, pickCounts, dn);
+    renderPointsRace(ranked, matches, activeRounds, dn);
     renderConsensus(matches, rounds, pickCounts);
-    renderHeatmap(ranked, matches, rounds);
+    renderHeatmap(ranked, matches, rounds, dn);
 
   } catch (err) {
     console.error(err);
@@ -128,7 +130,7 @@ async function initStats() {
   }
 }
 
-function renderSpotlight(ranked, matches, pickCounts) {
+function renderSpotlight(ranked, matches, pickCounts, dn) {
   const decidedMatches = Object.values(matches).filter(m => m.result);
 
   // Biggest upset — winner must have been a minority pick (< 50%)
@@ -143,7 +145,7 @@ function renderSpotlight(ranked, matches, pickCounts) {
   });
 
   const formatNames = players =>
-    players.length <= 3 ? players.map(u => u.name.split(" ")[0]).join(", ") : `${players.length} players`;
+    players.length <= 3 ? players.map(u => dn[u.name]).join(", ") : `${players.length} players`;
 
   // Score guru — all tied
   const maxExact = ranked.reduce((max, u) => Math.max(max, u.statExact), 0);
@@ -161,7 +163,7 @@ function renderSpotlight(ranked, matches, pickCounts) {
     leaderValue = `<div class="spotlight-value spotlight-empty">–</div>`;
     leaderSub   = "No picks yet";
   } else if (leaders.length === 1) {
-    leaderValue = `<div class="spotlight-value" style="color:var(--green)">${leaders[0].name}</div>`;
+    leaderValue = `<div class="spotlight-value" style="color:var(--green)">${dn[leaders[0].name]}</div>`;
     leaderSub   = `${topScore} pts`;
   } else {
     leaderValue = `<div class="spotlight-value" style="font-size:0.9rem;color:var(--green)">${formatNames(leaders)}</div>`;
@@ -205,7 +207,7 @@ function renderSpotlight(ranked, matches, pickCounts) {
 }
 
 
-function renderPointsRace(ranked, matches, activeRounds) {
+function renderPointsRace(ranked, matches, activeRounds, dn) {
   // All decided matches sorted chronologically across all rounds
   const decided = Object.values(matches)
     .filter(m => m.result && m.team1 && m.team1 !== "TBD")
@@ -226,7 +228,7 @@ function renderPointsRace(ranked, matches, activeRounds) {
   const datasets = ranked.map((u, i) => {
     let cum = 0;
     return {
-      label: u.name,
+      label: dn[u.name],
       data: [0, ...decided.map(m => { cum += u.matchResults[m.id]?.pts || 0; return cum; })],
       borderColor: CHART_COLORS[i % CHART_COLORS.length],
       backgroundColor: "transparent",
@@ -316,7 +318,7 @@ function renderConsensus(matches, rounds, pickCounts) {
   document.getElementById("consensusList").innerHTML = html || `<p style="color:var(--text-muted)">No match data yet.</p>`;
 }
 
-function renderHeatmap(ranked, matches, rounds) {
+function renderHeatmap(ranked, matches, rounds, dn) {
   const activeRounds = rounds.filter(r => r.status !== "upcoming");
   const decided = activeRounds.flatMap(round =>
     Object.values(matches)
@@ -340,7 +342,7 @@ function renderHeatmap(ranked, matches, rounds) {
 
   // Player rows
   ranked.forEach(u => {
-    html += `<div class="hm-row"><div class="hm-name-cell"><span class="hm-name">${u.name}</span></div>`;
+    html += `<div class="hm-row"><div class="hm-name-cell"><span class="hm-name">${dn[u.name]}</span></div>`;
     decided.forEach(m => {
       const r = u.matchResults[m.id];
       let cls = "hm-cell ";

@@ -5,6 +5,7 @@ let allMatches = [];
 let myPicks = {};          // { matchId: { winner: 'team1', score1: 2, score2: 1 } }
 let peerPicks = {};        // { matchId: { team1: ['Alice', 'Bob'], team2: ['Carol'] } }
 let allPlayerPicks = {};   // { matchId: { team1: [{name, isSelf}], team2: [...] } }
+let peerDisplayNames = {}; // { fullName → displayName }
 let currentRoundId = null;
 let currentRoundData = null;
 let showGroupView = false;
@@ -191,6 +192,8 @@ async function loadPeerPicks() {
     ]);
     const names = {};
     usersSnap.docs.forEach(d => { names[d.id] = d.data().name; });
+    const allNames = [user.name, ...Object.values(names)].filter(Boolean);
+    peerDisplayNames = buildDisplayNames(allNames);
 
     peerPicks = {};
     allPlayerPicks = {};
@@ -219,8 +222,8 @@ async function loadPeerPicks() {
 function pickerLabel(names) {
   if (!names || names.length === 0) return "";
   const MAX = 4;
-  const firsts = names.map(n => n.split(" ")[0]);
-  const list = firsts.length <= MAX ? firsts.join(", ") : firsts.slice(0, MAX).join(", ") + "…";
+  const display = names.map(n => peerDisplayNames[n] || n.split(" ")[0]);
+  const list = display.length <= MAX ? display.join(", ") : display.slice(0, MAX).join(", ") + "…";
   return `Also picked by ${list}`;
 }
 
@@ -432,7 +435,7 @@ function groupMatchCard(match, round) {
         : '';
       return `
       <div class="gpick-name ${p.isSelf ? 'gpick-self' : ''} ${won ? 'gpick-correct' : lost ? 'gpick-wrong' : ''}">
-        <span>${p.name}${p.isSelf ? ' (you)' : ''}</span>${ptsChip}
+        <span>${peerDisplayNames[p.name] || p.name.split(" ")[0]}${p.isSelf ? ' (you)' : ''}</span>${ptsChip}
       </div>`;
     }).join("");
   }
