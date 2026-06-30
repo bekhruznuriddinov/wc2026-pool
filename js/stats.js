@@ -114,7 +114,9 @@ async function initStats() {
     }).sort((a, b) => b.totalPoints - a.totalPoints || a.name.localeCompare(b.name));
 
     document.getElementById("loading").style.display = "none";
-    document.getElementById("statsContent").style.display = "block";
+    document.getElementById("statsTop").style.display = "block";
+    document.getElementById("pointsRaceSection").style.display = "block";
+    document.getElementById("statsBottom").style.display = "block";
 
     renderSpotlight(ranked, matches, pickCounts);
     renderPointsRace(ranked, matches, activeRounds);
