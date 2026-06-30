@@ -1,9 +1,6 @@
 name: Update WC 2026 Match Results
 
 on:
-  schedule:
-    # Runs every 15 minutes
-    - cron: '*/15 * * * *'
   workflow_dispatch:
     # Also allows you to trigger it manually from the GitHub Actions tab
 
