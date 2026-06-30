@@ -278,7 +278,7 @@ function renderConsensus(matches, rounds, pickCounts) {
 
   activeRounds.forEach(round => {
     const roundMatches = Object.values(matches)
-      .filter(m => m.roundId === round.id && m.team1 && m.team1 !== "TBD" && !m.freebie && (m.result || pickCounts[m.id]))
+      .filter(m => m.roundId === round.id && m.team1 && m.team1 !== "TBD" && (m.result || pickCounts[m.id]))
       .sort((a, b) => {
         const ta = a.kickoff ? (a.kickoff.toDate ? a.kickoff.toDate() : new Date(a.kickoff)).getTime() : 0;
         const tb = b.kickoff ? (b.kickoff.toDate ? b.kickoff.toDate() : new Date(b.kickoff)).getTime() : 0;
@@ -289,28 +289,38 @@ function renderConsensus(matches, rounds, pickCounts) {
     html += `<div class="consensus-round-label">${round.name}</div>`;
 
     roundMatches.forEach(match => {
-      const c = pickCounts[match.id] || { team1: 0, team2: 0 };
-      const total = c.team1 + c.team2;
-      const pct1 = total ? Math.round((c.team1 / total) * 100) : 50;
-      const pct2 = 100 - pct1;
       const t1won = match.result === "team1";
       const t2won = match.result === "team2";
+      let pct1, pct2, total, metaNote;
+
+      if (match.freebie) {
+        pct1 = t1won ? 100 : 0;
+        pct2 = t2won ? 100 : 0;
+        total = null;
+        metaNote = `Free pick · ${t1won ? match.team1 : match.team2} won`;
+      } else {
+        const c = pickCounts[match.id] || { team1: 0, team2: 0 };
+        total = c.team1 + c.team2;
+        pct1 = total ? Math.round((c.team1 / total) * 100) : 50;
+        pct2 = 100 - pct1;
+        metaNote = `${total} pick${total !== 1 ? "s" : ""}${match.result ? ` · ${t1won ? match.team1 : match.team2} won` : ""}`;
+      }
 
       html += `
         <div class="consensus-row">
           <div class="consensus-bar-wrap">
             <div class="consensus-team ${t1won ? "ct-won" : match.result ? "ct-lost" : ""}">${match.team1}</div>
             <div class="consensus-track">
-              <div class="consensus-fill ${t1won ? "cf-win" : match.result ? "cf-lose" : c.team1 >= c.team2 ? "cf-fav" : "cf-und"}" style="width:${pct1}%">
+              <div class="consensus-fill ${t1won ? "cf-win" : match.result ? "cf-lose" : pct1 >= pct2 ? "cf-fav" : "cf-und"}" style="width:${pct1}%">
                 ${pct1 >= 18 ? `<span>${pct1}%</span>` : ""}
               </div>
-              <div class="consensus-fill ${t2won ? "cf-win" : match.result ? "cf-lose" : c.team2 > c.team1 ? "cf-fav" : "cf-und"}" style="width:${pct2}%;justify-content:flex-end">
+              <div class="consensus-fill ${t2won ? "cf-win" : match.result ? "cf-lose" : pct2 > pct1 ? "cf-fav" : "cf-und"}" style="width:${pct2}%;justify-content:flex-end">
                 ${pct2 >= 18 ? `<span>${pct2}%</span>` : ""}
               </div>
             </div>
             <div class="consensus-team ct-right ${t2won ? "ct-won" : match.result ? "ct-lost" : ""}">${match.team2}</div>
           </div>
-          <div class="consensus-meta">${total} pick${total !== 1 ? "s" : ""}${match.result ? ` · ${t1won ? match.team1 : match.team2} won` : ""}</div>
+          <div class="consensus-meta">${metaNote}</div>
         </div>`;
     });
   });
