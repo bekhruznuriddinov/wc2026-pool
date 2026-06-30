@@ -146,7 +146,7 @@ async function initLeaderboard() {
                 ${r.status === "open" || r.status === "closed"
                   ? `<span class="badge badge-open" style="font-size:0.55rem;margin-left:3px">live</span>`
                   : ""}
-                <br><span style="color:var(--text-dim);font-size:0.65rem">${ROUND_POINTS[r.id]}pt ea</span>
+                <br><span style="color:var(--text-dim);font-size:0.65rem">${ROUND_POINTS[r.id]}pt base · ${8 * ROUND_POINTS[r.id]}pt max</span>
               </th>`).join("")}
             <th style="text-align:center">Picked<br><span style="color:var(--text-dim);font-size:0.65rem">submitted</span></th>
             <th style="text-align:center">Winners<br><span style="color:var(--text-dim);font-size:0.65rem">correct</span></th>
