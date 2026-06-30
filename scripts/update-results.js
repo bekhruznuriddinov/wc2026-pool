@@ -114,10 +114,32 @@ async function main() {
     }
 
     if (FINISHED_STATUSES.has(m.status) && !fsMatch.result) {
-      const score = m.score?.fullTime;
-      const winner = m.score?.winner;
+      const isPenShootout = m.score?.duration === "PENALTY_SHOOTOUT";
+
+      // For pen shootouts store regularTime+extraTime (the drawn score), not fullTime
+      // which football-data.org inflates with penalty kicks. Our isPens scoring logic
+      // needs equal scores (a1 === a2) to detect a shootout.
+      let score;
+      if (isPenShootout) {
+        const rt = m.score?.regularTime || {};
+        const et = m.score?.extraTime   || {};
+        const rh = rt.home ?? 0, ra = rt.away ?? 0;
+        const eh = et.home ?? 0, ea = et.away ?? 0;
+        if (rt.home != null) score = { home: rh + eh, away: ra + ea };
+      } else {
+        score = m.score?.fullTime;
+      }
+
+      // Derive winner from fullTime when the API hasn't set it yet (e.g. PENALTY_SHOOTOUT lag)
+      let winner = m.score?.winner;
+      if (!winner && m.score?.fullTime) {
+        const ft = m.score.fullTime;
+        if (ft.home != null && ft.away != null && ft.home !== ft.away)
+          winner = ft.home > ft.away ? "HOME_TEAM" : "AWAY_TEAM";
+      }
+
       if (!score || !winner || winner === "DRAW")
-        console.log(`  [SKIP] ${fsMatch.team1} vs ${fsMatch.team2} — status=${m.status} winner=${winner} score=${JSON.stringify(score)}`);
+        console.log(`  [SKIP] ${fsMatch.team1} vs ${fsMatch.team2} — status=${m.status} duration=${m.score?.duration} winner=${winner} score=${JSON.stringify(score)}`);
       if (score && winner && winner !== "DRAW") {
         const homeIsTeam1 = fsMatch.team1 === apiHome;
         updates.result   = winner === "HOME_TEAM" ? (homeIsTeam1 ? "team1" : "team2") : (homeIsTeam1 ? "team2" : "team1");
@@ -125,7 +147,8 @@ async function main() {
         updates.score2   = homeIsTeam1 ? score.away : score.home;
         updates.updatedByBot = true;
         const winName = updates.result === "team1" ? fsMatch.team1 : fsMatch.team2;
-        console.log(`  [result]  ${fsMatch.team1} ${updates.score1}–${updates.score2} ${fsMatch.team2}  →  ${winName} wins`);
+        const durNote = isPenShootout ? " (pens)" : "";
+        console.log(`  [result]  ${fsMatch.team1} ${updates.score1}–${updates.score2} ${fsMatch.team2}${durNote}  →  ${winName} wins`);
         resultsUpdated++;
 
         // Also store apiMatchId for future reference
