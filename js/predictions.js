@@ -109,7 +109,7 @@ function renderRound(round) {
   document.getElementById("roundHeader").innerHTML = `
     <div class="round-info">
       <h2>${round.name}</h2>
-      <p>${deadlineStr}${pts} pt${pts > 1 ? "s" : ""} per correct winner</p>
+      <p>${deadlineStr}${pts} pt${pts > 1 ? "s" : ""} base per correct winner · up to ${8 * pts} pts with bonuses</p>
     </div>
     <span class="badge badge-${round.status}">${round.status}</span>
   `;
