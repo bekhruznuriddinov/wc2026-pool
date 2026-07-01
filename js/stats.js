@@ -345,8 +345,9 @@ function renderHeatmap(ranked, matches, rounds, dn) {
 
   // Header
   html += `<div class="hm-row"><div class="hm-name-cell"></div>`;
+  const abbr = n => (n || "?").slice(0, 3).toUpperCase();
   decided.forEach(m => {
-    html += `<div class="hm-cell hm-col-head" title="${m.team1} vs ${m.team2}">${m.matchNum || "?"}</div>`;
+    html += `<div class="hm-cell hm-col-head" title="${m.team1} vs ${m.team2}">${abbr(m.team1)} v ${abbr(m.team2)}</div>`;
   });
   html += `</div>`;
 
