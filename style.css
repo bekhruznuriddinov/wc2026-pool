@@ -867,7 +867,8 @@ details summary:hover { color: var(--text); }
 .hm-row  { display: flex; align-items: center; gap: 3px; }
 .hm-name-cell { width: 110px; flex-shrink: 0; padding-right: 6px; }
 .hm-name { font-size: 0.78rem; color: var(--text); white-space: nowrap; }
-.hm-cell { flex: 1; min-width: 0; height: 22px; border-radius: 3px; overflow: hidden; }
+.hm-cell { flex: 1; min-width: 0; height: 22px; border-radius: 3px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.hm-pts-label { font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.92); pointer-events: none; }
 .hm-col-head {
   font-size: 0.6rem;
   color: var(--text-muted);

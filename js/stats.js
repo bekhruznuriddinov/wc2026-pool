@@ -356,18 +356,26 @@ function renderHeatmap(ranked, matches, rounds, dn) {
     html += `<div class="hm-row"><div class="hm-name-cell"><span class="hm-name">${dn[u.name]}</span></div>`;
     decided.forEach(m => {
       const r = u.matchResults[m.id];
+      const maxPts = 8 * (ROUND_POINTS[m.roundId] || 1);
       let cls = "hm-cell ";
+      let style = "";
+      let label = "";
       let tip = "";
+
       if (!r || !r.hasPick) {
         cls += "hm-no-pick"; tip = "no pick";
-      } else if (r.exact) {
-        cls += "hm-exact"; tip = `exact score +${r.pts}pts`;
-      } else if (r.correct) {
-        cls += "hm-correct"; tip = `correct +${r.pts}pts`;
+      } else if (!r.correct) {
+        cls += "hm-wrong"; tip = "wrong (0 pts)";
       } else {
-        cls += "hm-wrong"; tip = "wrong";
+        const pts = r.pts || 0;
+        const ratio = maxPts > 0 ? Math.min(pts / maxPts, 1) : 0;
+        const l = Math.round(72 - ratio * 44); // light green → dark green
+        style = `background:hsl(145,55%,${l}%)`;
+        tip = `+${pts} pts${r.exact ? " · exact score!" : ""}`;
+        label = String(pts);
       }
-      html += `<div class="${cls}" title="${tip}"></div>`;
+
+      html += `<div class="${cls}" style="${style}" title="${tip}">${label ? `<span class="hm-pts-label">${label}</span>` : ""}</div>`;
     });
     html += `</div>`;
   });
