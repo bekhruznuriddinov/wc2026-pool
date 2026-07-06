@@ -138,25 +138,25 @@ function renderRound(round) {
   document.getElementById("roundAlert").innerHTML = alertHtml;
 
   // Scoring banner
-  const maxMatchPts = pts + 7; // base + maverick + margin + exact
+  const maxMatchPts = 8 * pts;
   document.getElementById("scoringBanner").innerHTML = (isOpen || isComplete) ? `
     <details class="scoring-banner">
       <summary>How scoring works</summary>
       <div class="scoring-banner-body">
         <div class="scoring-chain">
-          <span><strong style="color:var(--green)">+1</strong> correct winner</span>
+          <span><strong style="color:var(--green)">+${pts}</strong> correct winner</span>
           <span class="chain-arrow">→</span>
-          <span><strong style="color:#7F77DD">+1</strong> maverick</span>
+          <span><strong style="color:#7F77DD">+${pts}</strong> maverick</span>
           <span class="chain-arrow">→</span>
-          <span><strong style="color:var(--green)">+1</strong> right margin</span>
+          <span><strong style="color:var(--green)">+${pts}</strong> right margin</span>
           <span class="chain-arrow">→</span>
-          <span><strong style="color:var(--green)">+5</strong> exact score</span>
+          <span><strong style="color:var(--green)">+${5 * pts}</strong> exact score</span>
           <span class="chain-arrow">=</span>
           <strong>${maxMatchPts} pts max</strong>
         </div>
         <div style="margin-top:0.4rem;font-size:0.8rem;color:var(--text-muted)">
-          Maverick: <strong style="color:#7F77DD">+1</strong> if you picked against the majority and won.
-          Bonuses stack. Wrong score prediction deducts <strong style="color:var(--red)">−1</strong> (correct winner only, never goes negative).
+          Maverick: <strong style="color:#7F77DD">+${pts}</strong> if you picked against the majority and won.
+          Bonuses stack. Wrong score prediction deducts <strong style="color:var(--red)">−${pts}</strong> (correct winner only, never goes negative).
           Penalty shootouts: the winning team gets <strong>+1 goal</strong> for scoring purposes (e.g. 1–1 pens = 2–1). If you predicted a draw score with the correct winner, it counts the same way — so predicting 1–1 or 2–1 for a 1–1 pens match both earn exact-score points.
         </div>
       </div>
