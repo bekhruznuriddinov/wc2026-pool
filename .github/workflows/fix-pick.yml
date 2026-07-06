@@ -1,0 +1,45 @@
+name: Admin — Fix Player Pick
+
+on:
+  workflow_dispatch:
+    inputs:
+      player_name:
+        description: "Player's first name (e.g. Peter)"
+        required: true
+      team1:
+        description: "Team 1 name exactly as in Firestore (e.g. Spain)"
+        required: true
+      team2:
+        description: "Team 2 name exactly as in Firestore (e.g. Portugal)"
+        required: true
+      pick_winner:
+        description: "Which team wins? Enter team1 or team2 name (e.g. Spain)"
+        required: true
+      score1:
+        description: "Score for team1 (leave blank for no score)"
+        required: false
+      score2:
+        description: "Score for team2 (leave blank for no score)"
+        required: false
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+        working-directory: scripts
+      - name: Apply pick fix
+        run: node fix-pick.js
+        working-directory: scripts
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          PLAYER_NAME: ${{ inputs.player_name }}
+          TEAM1: ${{ inputs.team1 }}
+          TEAM2: ${{ inputs.team2 }}
+          PICK_WINNER: ${{ inputs.pick_winner }}
+          SCORE1: ${{ inputs.score1 }}
+          SCORE2: ${{ inputs.score2 }}
