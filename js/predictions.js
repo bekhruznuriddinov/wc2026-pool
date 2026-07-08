@@ -379,7 +379,7 @@ function matchCard(match, round) {
         ${bonusLabel()}
         ${predictedScoreLabel()}
       </div>` : ""}
-    ${isOpen && !result && !tbd1 && !tbd2 ? `<div class="score-hint">Score: <strong style="color:var(--green)">+1</strong> winner <span class="chain-arrow">→</span> <strong style="color:#7F77DD">+1</strong> maverick <span class="chain-arrow">→</span> <strong style="color:var(--green)">+1</strong> margin <span class="chain-arrow">→</span> <strong style="color:var(--green)">+5</strong> exact &nbsp;·&nbsp; <strong style="color:var(--red)">−1</strong> if wrong</div>` : ""}
+    ${isOpen && !result && !tbd1 && !tbd2 ? (() => { const b = ROUND_POINTS[round.id]; return `<div class="score-hint">Score: <strong style="color:var(--green)">+${b}</strong> winner <span class="chain-arrow">→</span> <strong style="color:#7F77DD">+${b}</strong> maverick <span class="chain-arrow">→</span> <strong style="color:var(--green)">+${b}</strong> margin <span class="chain-arrow">→</span> <strong style="color:var(--green)">+${5*b}</strong> exact &nbsp;·&nbsp; <strong style="color:var(--red)">−${b}</strong> if wrong</div>`; })() : ""}
   </div>`;
 }
 
